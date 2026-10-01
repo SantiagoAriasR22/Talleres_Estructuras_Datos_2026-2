@@ -1,61 +1,31 @@
 package Colas;
 
-public class ServidorMQTT{
-    MensajeMQTT primerNodo;
-    MensajeMQTT ultimoNodo;
-    int tamaño = 0;
+public class ServidorMQTT {
 
-    public ServidorMQTT(){
-        limpiar();
+    Cola cola = new Cola<>();
+
+    public void publicarMensaje(MensajeMQTT mensaje){
+
+        cola.encolar(new Nodo(mensaje));
+
+        System.out.println("El mensaje se agrego a la cola con exito");
+        System.out.println("Informacion del mensaje: ");
+        System.out.print("ID del mensaje: "+mensaje.getId()+" | ");
+        System.out.print("ID del sensor: "+mensaje.getDispositivoId()+" | ");
+        System.out.println("Hora de publicacion: "+mensaje.getTimeStamp());
+        System.out.println("Mensajes actuales en cola: "+cola.tamaño);
     }
 
-    private void limpiar(){
-        primerNodo = null;
-        ultimoNodo = null;
-        tamaño = 0;
-    }
+    public void procesarMensaje(){
 
-    public boolean estaVacia(){
-        if (tamaño == 0)
-            return true;
-        else
-            return false;
-    }
+        MensajeMQTT mensaje = (MensajeMQTT) cola.decolar();
 
-    public MensajeMQTT decolar(){
-
-        MensajeMQTT aux=null;
-
-        if(!estaVacia()){
-            aux = primerNodo;
-            primerNodo = primerNodo.sig;
-            tamaño--;
+        if(mensaje!=null){
+            System.out.println("El mensaje salio de la cola con exito");
+            System.out.println("Informacion del mensaje: ");
+            System.out.println(mensaje.toResumen());
+            System.out.println("Mensajes restantes en cola: "+(cola.estaVacia() ? "No hay elementos en cola" : cola.tamaño));
         }
 
-        else System.out.println("La Cola esta vacia");
-
-        return aux;
-
     }
-
-    public void encolar(MensajeMQTT Nodo){
-
-        MensajeMQTT nuevoNodo = Nodo;
-
-        if(estaVacia()){
-            primerNodo = nuevoNodo;
-            ultimoNodo = nuevoNodo;
-        }
-        else{
-            ultimoNodo.sig = Nodo;
-            ultimoNodo= Nodo;
-        }
-
-        tamaño++;
-
-        System.out.println("Se agrego correctamente un nuevo mensaje");
-        System.out.println("ID: "+nuevoNodo.getId());
-        System.out.println("Hora en la que se añadio a la cola: "+nuevoNodo.getTimeStamp());
-    }
-
 }

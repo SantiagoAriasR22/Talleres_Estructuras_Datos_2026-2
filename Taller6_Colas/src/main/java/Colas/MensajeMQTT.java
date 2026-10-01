@@ -1,6 +1,7 @@
 package Colas;
 
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class MensajeMQTT{
 
@@ -10,6 +11,8 @@ public class MensajeMQTT{
     String payload;
     LocalTime timeStamp;
     MensajeMQTT sig;
+
+    private DateTimeFormatter formato = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public MensajeMQTT(int Id, String dispositivoId, String topic, String payload, LocalTime timeStamp, MensajeMQTT sig){
 
@@ -21,11 +24,19 @@ public class MensajeMQTT{
         this.sig=sig;
     }
 
+    public String toResumen(){
+        return "ID mensaje: "+this.Id+" | "+
+                "ID dispositivo: "+this.dispositivoId+" | "+
+                "Topic: "+this.topic+" | "+
+                "Payload: "+this.payload+" | "+
+                "TimeStamp: "+getTimeStamp();
+    }
+
     //getters
     public int getId(){ return Id; }
     public String getDispositivoId(){ return dispositivoId; }
     public String getTopic(){ return topic; }
     public String getPayload(){ return payload; }
-    public LocalTime getTimeStamp(){ return timeStamp; }
+    public String getTimeStamp(){ return timeStamp.format(formato); }
 
 }
