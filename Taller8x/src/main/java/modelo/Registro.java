@@ -15,7 +15,6 @@ public class Registro {
     }
 
     //getters
-    
     public String getFirtsName() {
         return firtsName;
     }
