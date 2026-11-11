@@ -25,7 +25,7 @@ public class TablaHash{
         
     }
     
-    public void insertarRegistroLista(Registro registro, boolean metodoHash){
+    public void insertarRegistro(Registro registro, boolean metodoHash){ //si metodoHash es true es division, de lo contrario es mutliplicacion
         
         int k = getK(registro.getPlate());
         
@@ -35,7 +35,7 @@ public class TablaHash{
             
             Lista<Registro> listaSlot = (Lista<Registro>) this.tablaHash.get(indice);
             
-            if(listaSlot.estaVacia()) colisiones++;
+            if(!listaSlot.estaVacia()) colisiones++;
             
             listaSlot.adicionarFinal(new NodoLista(registro));
             
@@ -46,11 +46,9 @@ public class TablaHash{
             
             if(arbolSlot.getRaiz()!=null) colisiones++;
 
-            
             arbolSlot.adicionar(registro, k, arbolSlot.getRaiz(), 0);
+            
         }
-        
-        
         
     }
     
@@ -81,7 +79,8 @@ public class TablaHash{
         return (int) Math.floor(m*((k*A)%1));
     }
     
-    
-    
+    public int getColisiones(){
+        return colisiones;
+    }
     
 }

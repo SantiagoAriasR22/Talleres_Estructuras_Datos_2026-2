@@ -1,9 +1,13 @@
+vista\PanelArbol.class
 persistencia\Lectura.class
 modelo\Lista.class
 persistencia\Escritura.class
 modelo\TablaHash.class
 modelo\Arbol.class
+vista\PanelLista.class
+vista\GUI.class
 modelo\NodoLista.class
+controlador\Controlador.class
 modelo\NodoArbol.class
 modelo\main.class
 modelo\Registro.class

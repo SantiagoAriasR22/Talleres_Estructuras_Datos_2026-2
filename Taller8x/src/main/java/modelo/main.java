@@ -1,13 +1,16 @@
 package modelo;
 
+import vista.GUI;
+
 public class main {
     
     public static void main(String[] args) {
         
-        TablaHash tabla = new TablaHash(true);
-        
-        int radix=tabla.hashMultiplicacion(50770);
-        System.out.println(radix);
+        java.awt.EventQueue.invokeLater(() -> {
+            GUI ventana = new GUI();
+            ventana.setLocationRelativeTo(null); 
+            ventana.setVisible(true);
+        });
         
     }
 }

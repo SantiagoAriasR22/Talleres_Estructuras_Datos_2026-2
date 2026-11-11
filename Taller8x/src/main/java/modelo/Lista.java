@@ -53,6 +53,7 @@ public class Lista<T>{
 	}
         
 	tamaño=tamaño+1;
+        System.out.println("Tamaño: "+tamaño);
 	return true;
     }
 	
