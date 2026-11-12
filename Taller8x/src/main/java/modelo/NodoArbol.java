@@ -28,4 +28,12 @@ public class NodoArbol<T>{
         return informacion;
     }
     
+    public NodoArbol getIzq(){
+        return izquierdo;
+    }
+    
+    public NodoArbol getDer(){
+        return derecho;
+    }
+    
 }

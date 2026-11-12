@@ -19,4 +19,7 @@ public class NodoLista<T>{
 	return this.dato;
     }
     
+    public NodoLista getNext(){
+        return sig;
+    }
 }

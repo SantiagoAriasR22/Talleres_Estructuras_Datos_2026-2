@@ -133,4 +133,8 @@ public class Lista<T>{
         
         else System.out.println("La Lista esta vacia");
     }
+    
+    public NodoLista getHead(){
+    return primerNodo;
+    }
 }

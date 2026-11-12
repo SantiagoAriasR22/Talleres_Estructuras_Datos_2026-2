@@ -64,6 +64,17 @@ public class TablaHash{
         return k;
         
     }
+    public ArrayList<Object> getTablaHash() {
+        return tablaHash;
+    }
+
+    public boolean isEsLista() {
+        return esLista;
+    }
+
+    public int getM() {
+        return m;
+    }
     
     public int hashDivision(int k){
         return k%m;
