@@ -6,32 +6,28 @@ public class TablaHash{
     private final ArrayList<Object> tablaHash;
     private int colisiones=0;
     private final Integer m=256;
-    private final boolean flag; //si flag es true es lista, de lo contrario es arbol
+    private final boolean esLista;
+    private final boolean esDivision;
     
-    public TablaHash(boolean flag){
+    public TablaHash(boolean esLista, boolean esDivision){
         
-        this.flag=flag;
+        this.esLista=esLista;
+        this.esDivision=esDivision;
         this.tablaHash=new ArrayList<>(m);
         
         for(int i=0; i<m; i++){ 
-            
-            if(flag){
-                this.tablaHash.add(new Lista<Registro>());
-            }
-            else{
-                this.tablaHash.add(new Arbol<Registro>());
-            }
+            tablaHash.add(esLista ? new Lista<Registro>() : new Arbol());
         }
         
     }
     
-    public void insertarRegistro(Registro registro, boolean metodoHash){ //si metodoHash es true es division, de lo contrario es mutliplicacion
+    public void insertarRegistro(Registro registro){
         
         int k = getK(registro.getPlate());
         
-        int indice = (metodoHash) ? hashDivision(k) : hashMultiplicacion(k);
+        int indice = (esDivision) ? hashDivision(k) : hashMultiplicacion(k);
         
-        if(flag){
+        if(esLista){
             
             Lista<Registro> listaSlot = (Lista<Registro>) this.tablaHash.get(indice);
             

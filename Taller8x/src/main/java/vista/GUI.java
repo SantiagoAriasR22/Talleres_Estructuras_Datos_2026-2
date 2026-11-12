@@ -23,6 +23,7 @@ public class GUI extends javax.swing.JFrame {
         jComboBox1 = new javax.swing.JComboBox<>();
         jComboBox2 = new javax.swing.JComboBox<>();
         jComboBox3 = new javax.swing.JComboBox<>();
+        jblHash = new javax.swing.JComboBox<>();
         jPanel3 = new javax.swing.JPanel();
         panel = new javax.swing.JPanel();
         lblRutaArchivo = new javax.swing.JLabel();
@@ -59,6 +60,12 @@ public class GUI extends javax.swing.JFrame {
         jComboBox3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
         jComboBox3.addActionListener(this::jComboBox3ActionPerformed);
 
+        jblHash.setBackground(new java.awt.Color(224, 242, 254));
+        jblHash.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
+        jblHash.setForeground(new java.awt.Color(15, 23, 42));
+        jblHash.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Hash Method", "Division", "Multiplication" }));
+        jblHash.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -67,19 +74,23 @@ public class GUI extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jComboBox3, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(38, Short.MAX_VALUE))
+                .addComponent(jComboBox3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jblHash, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(43, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
-                    .addComponent(jComboBox2)
-                    .addComponent(jComboBox3))
+                    .addComponent(jComboBox1)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jComboBox3, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jblHash))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -119,7 +130,7 @@ public class GUI extends javax.swing.JFrame {
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addContainerGap(496, Short.MAX_VALUE)
+                .addContainerGap(490, Short.MAX_VALUE)
                 .addComponent(panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -152,7 +163,7 @@ public class GUI extends javax.swing.JFrame {
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jblColisiones, javax.swing.GroupLayout.DEFAULT_SIZE, 142, Short.MAX_VALUE)
+                .addComponent(jblColisiones, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -227,6 +238,7 @@ public class GUI extends javax.swing.JFrame {
         
         String opcion = (String) jComboBox1.getSelectedItem();
         String estructura = (String) jComboBox3.getSelectedItem();
+        String metodoHash = (String) jblHash.getSelectedItem();
         
         if("Open".equals(opcion)){
             JFileChooser explorador = new JFileChooser();
@@ -243,18 +255,12 @@ public class GUI extends javax.swing.JFrame {
                 String rutaCompleta = archivoSeleccionado.getAbsolutePath();
 
                 lblRutaArchivo.setText(rutaCompleta);
-            
-                //validar en caso de que se seleccione la ruta del archivo pero no se haya seleccionado la estructura
-                if("List".equals(estructura)){
-                    System.out.println("Si?");
-                    controlador.crearTabla(true);
-                    controlador.cargarDatos(archivoSeleccionado, true);
-                }
-                else{
-                    controlador.crearTabla(false);
-                    controlador.cargarDatos(archivoSeleccionado, false);
-                }
-
+                
+                boolean esLista = "List".equals(estructura);
+                boolean esDivision = "Division".equals(metodoHash);
+                
+                controlador.crearTabla(esLista, esDivision);
+                controlador.cargarDatos(archivoSeleccionado);
             }
         }
         
@@ -281,6 +287,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JLabel jblColisiones;
+    private javax.swing.JComboBox<String> jblHash;
     private javax.swing.JLabel lblRutaArchivo;
     private javax.swing.JPanel panel;
     // End of variables declaration//GEN-END:variables

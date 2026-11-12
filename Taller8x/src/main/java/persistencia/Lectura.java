@@ -9,7 +9,7 @@ import modelo.TablaHash;
 
 public class Lectura {
     
-    public void lecturaRegistros(File archivo, TablaHash tablaHash, boolean estructura){
+    public void lecturaRegistros(File archivo, TablaHash tablaHash){
         
         try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
             
@@ -21,7 +21,7 @@ public class Lectura {
                 if (datos.length >= 4) {
                     Registro nuevo = new Registro(datos[0].trim(), datos[1].trim(), datos[2].trim(), datos[3].trim());
                     
-                    tablaHash.insertarRegistro(nuevo, estructura);
+                    tablaHash.insertarRegistro(nuevo);
                 }
             }
         } catch (IOException e) {

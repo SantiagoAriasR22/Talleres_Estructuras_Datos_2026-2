@@ -11,12 +11,12 @@ public class Controlador {
     
     public Controlador(){}
     
-    public void crearTabla(boolean flag){
-        tablaHash = new TablaHash(flag);
+    public void crearTabla(boolean esLista, boolean esDivision){
+        tablaHash = new TablaHash(esLista, esDivision);
     }
     
-    public void cargarDatos(File archivo, boolean estructura){ 
-        lectura.lecturaRegistros(archivo, tablaHash, estructura);
+    public void cargarDatos(File archivo){ 
+        lectura.lecturaRegistros(archivo, tablaHash);
     }
     
     public void cargarRegistroGUI(){
@@ -24,7 +24,7 @@ public class Controlador {
     }
     
     public int cargarColisiones(){
-        return tablaHash.getColisiones();
+        return (tablaHash==null) ? 0 : tablaHash.getColisiones();
     }
     
 }
