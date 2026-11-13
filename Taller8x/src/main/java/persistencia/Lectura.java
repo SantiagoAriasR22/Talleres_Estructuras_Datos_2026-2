@@ -4,17 +4,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import modelo.Registro;
-import modelo.TablaHash;
 
 public class Lectura {
     
-    // Lee el csv y devuelve cuantos registros se insertaron.
-    // Devuelve -1 si hubo un error de lectura, para que la GUI pueda distinguir
-    // "el archivo no tiene el formato" de "no se pudo abrir".
-    public int lecturaRegistros(File archivo, TablaHash tablaHash){
+    // Lee el csv y devuelve la lista de registros encontrados.
+    // Devuelve null si no se pudo abrir el archivo (distinto de una lista vacia,
+    // que significa "se abrio pero no tenia ninguna linea valida").
+    // Ya no inserta en la tabla: de eso se encarga el Controlador, que necesita
+    // quedarse con la lista para poder reconstruir la tabla despues.
+    public List<Registro> leer(File archivo){
         
-        int cargados = 0;
+        List<Registro> registros = new ArrayList<>();
         
         try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
             
@@ -24,17 +27,14 @@ public class Lectura {
                 String[] datos = linea.split(";"); 
                 
                 if (datos.length >= 4) {
-                    Registro nuevo = new Registro(datos[0].trim(), datos[1].trim(), datos[2].trim(), datos[3].trim());
-                    
-                    tablaHash.insertarRegistro(nuevo);
-                    cargados++;
+                    registros.add(new Registro(datos[0].trim(), datos[1].trim(), datos[2].trim(), datos[3].trim()));
                 }
             }
         } catch (IOException e) {
             System.err.println("Error al leer el archivo: " + e.getMessage());
-            return -1;
+            return null;
         }
         
-        return cargados;
+        return registros;
     }
 }

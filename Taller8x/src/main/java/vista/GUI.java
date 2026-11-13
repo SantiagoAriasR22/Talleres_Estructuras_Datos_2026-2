@@ -6,8 +6,6 @@ import static java.lang.System.exit;
 import modelo.Registro;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import modelo.TablaHash;
-import persistencia.Escritura;
 
 public class GUI extends javax.swing.JFrame {
     
@@ -16,6 +14,11 @@ public class GUI extends javax.swing.JFrame {
    
     public GUI() {
         initComponents();
+        
+        // El combo del metodo hash no tiene EventHandler en el .form, asi que se
+        // conecta aqui, fuera del bloque generado, para que NetBeans no lo borre
+        // al regenerar initComponents().
+        jblHash.addActionListener(e -> actualizarEstructura());
     }
 
     @SuppressWarnings("unchecked")
@@ -318,8 +321,32 @@ public class GUI extends javax.swing.JFrame {
     }
 
     private void jComboBoxDataEstrucActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxDataEstrucActionPerformed
-        // TODO add your handling code here:
+        actualizarEstructura();
     }//GEN-LAST:event_jComboBoxDataEstrucActionPerformed
+    
+    // Se dispara al cambiar la estructura o el metodo hash.
+    // Reconstruye la tabla en memoria, sin tocar el archivo: los registros viven
+    // en el Controlador, asi que no se pierde nada aunque no se haya guardado.
+    private void actualizarEstructura(){
+        
+        if(!controlador.hayTabla()) return;   // todavia no hay nada que reconstruir
+        
+        String estructura = (String) jComboBoxDataEstruc.getSelectedItem();
+        String metodoHash = (String) jblHash.getSelectedItem();
+        
+        boolean esLista;
+        if("List".equals(estructura)) esLista = true;
+        else if("Tree".equals(estructura)) esLista = false;
+        else return;                          // placeholder: se ignora sin molestar
+        
+        boolean esDivision;
+        if("Division".equals(metodoHash)) esDivision = true;
+        else if("Multiplication".equals(metodoHash)) esDivision = false;
+        else return;                          // placeholder: se ignora sin molestar
+        
+        controlador.cambiarEstructura(esLista, esDivision);
+        actualizarColisiones();
+    }
 
     private void jComboBoxOperationsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxOperationsActionPerformed
         
@@ -431,44 +458,40 @@ public class GUI extends javax.swing.JFrame {
               javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }
     
+    // Guarda el estado actual de la tabla. Ya no cambia la estructura: eso lo hace
+    // el combo Data Structure / Hash Method al seleccionarse.
+    // Se pide el destino para no sobrescribir por accidente el dataset original.
     public void save(){
+        
         if(!controlador.hayTabla()){
             aviso("Primero cargue un archivo CSV desde el menú File.", 
                   javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
         
-        String estructura = (String) jComboBoxDataEstruc.getSelectedItem();
-        String metodoHash = (String) jblHash.getSelectedItem();
+        JFileChooser explorador = new JFileChooser();
+        explorador.setDialogTitle("Guardar estado de la tabla");
         
-        boolean esLista;
-        if("List".equals(estructura)){
-            esLista = true;
-        } else if("Tree".equals(estructura)){
-            esLista = false;
-        } else {
-            aviso("Seleccione una estructura válida (List o Tree) antes de guardar.",
-                  javax.swing.JOptionPane.WARNING_MESSAGE);
-            return;
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv");
+        explorador.setFileFilter(filtro);
+        
+        if(controlador.getArchivoActual() != null){
+            explorador.setSelectedFile(controlador.getArchivoActual());
         }
         
-        boolean esDivision;
-        if("Division".equals(metodoHash)){
-            esDivision = true;
-        } else if("Multiplication".equals(metodoHash)){
-            esDivision = false;
-        } else {
-            aviso("Seleccione un método hash válido (Division o Multiplication) antes de guardar.",
-                  javax.swing.JOptionPane.WARNING_MESSAGE);
-            return;
+        if(explorador.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        
+        File destino = explorador.getSelectedFile();
+        
+        if(!destino.getName().toLowerCase().endsWith(".csv")){
+            destino = new File(destino.getAbsolutePath() + ".csv");
         }
         
-        if(controlador.guardarDatos(esLista, esDivision)){
-            actualizarColisiones(); // Refresca el número grande en pantalla
-            aviso("Archivo guardado y tabla actualizada (" + estructura + " - " + metodoHash + ").", 
+        if(controlador.guardarDatos(destino)){
+            aviso("Archivo guardado en:\n" + destino.getAbsolutePath(),
                   javax.swing.JOptionPane.INFORMATION_MESSAGE);
         } else {
-            aviso("No se pudo guardar el archivo.", 
+            aviso("No se pudo guardar el archivo.\nLa tabla en memoria no se modificó.", 
                   javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }

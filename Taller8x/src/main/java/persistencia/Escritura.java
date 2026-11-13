@@ -13,7 +13,10 @@ import modelo.TablaHash;
 
 public class Escritura {
     
-    public void actualizarArchivo(File archivo, TablaHash miTabla) {
+    // Devuelve true si el archivo quedo escrito, false si no se pudo.
+    // Quien llama esta obligado a revisar el resultado: si se ignora, se puede
+    // reportar "guardado" cuando en realidad no se escribio nada.
+    public boolean actualizarArchivo(File archivo, TablaHash miTabla) {
         
         // false para sobrescribir el archivo completo con los datos actualizados
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivo, false))) {
@@ -44,10 +47,11 @@ public class Escritura {
             }
             
             System.out.println("Archivo CSV actualizado correctamente desde la Tabla Hash.");
+            return true;
             
         } catch (IOException e) {
-            System.out.println("Error al actualizar el archivo csv: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Error al actualizar el archivo csv: " + e.getMessage());
+            return false;
         }
     }
     
