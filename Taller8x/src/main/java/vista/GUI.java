@@ -430,6 +430,7 @@ public class GUI extends javax.swing.JFrame {
             + "Gender:     " + encontrado.getGenero(),
               javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }
+    
     public void save(){
         if(!controlador.hayTabla()){
             aviso("Primero cargue un archivo CSV desde el menú File.", 

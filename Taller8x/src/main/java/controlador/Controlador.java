@@ -16,6 +16,7 @@ public class Controlador {
     
     public void crearTabla(boolean esLista, boolean esDivision){
         tablaHash = new TablaHash(esLista, esDivision);
+        
     }
     
     public int cargarDatos(File archivo){ 
@@ -29,23 +30,36 @@ public class Controlador {
     }
     
     public boolean guardarDatos(boolean nuevaEsLista, boolean nuevaEsDivision){
+        
         if (tablaHash == null || archivoActual == null) {
             return false;
         }
         
-        // 1. Guardamos en el CSV los cambios (inserciones/borrados) que tenga la tabla actual
-        escritura.actualizarArchivo(archivoActual, tablaHash);
+        // 1. Guardar lo que hay en RAM (inserts y deletes de la sesion).
+        //    Si esto falla, se aborta SIN tocar la tabla: no se pierde nada.
+        if(!escritura.actualizarArchivo(archivoActual, tablaHash)) {
+            return false;
+        }
         
-        // 2. Recreamos la tabla con la estructura y metodo hash seleccionados en la GUI
-        tablaHash = new TablaHash(nuevaEsLista, nuevaEsDivision);
+        // 2. Reconstruimos una tabla nueva sin tocar la actual
+        TablaHash nueva = new TablaHash(nuevaEsLista, nuevaEsDivision);
         
         // 3. Recargamos los registros para recalcular indices, nodos y colisiones
-        int cargados = lectura.lecturaRegistros(archivoActual, tablaHash);
+        int cargados = lectura.lecturaRegistros(archivoActual, nueva);
         
-        // 4. Actualizamos el CSV para que quede con el orden de la nueva estructura (lista o pre-orden)
+        //4. Si la relectura no trajo nada, se conserva la tabla de antes.
+        if(cargados <= 0) {
+            return false;
+        }
+        
+        // 4. Reescribir el archivo en el orden de la nueva estructura.
+        //    Si falla, los datos igual quedaron guardados en el paso 1; solo queda
+        //    el orden anterior, que es valido para recargar.
         escritura.actualizarArchivo(archivoActual, tablaHash);
         
-        return cargados >= 0;
+        // 5. Solo ahora se adopta la tabla nueva.
+        tablaHash = nueva;
+        return true;
     }
     
     public void cargarRegistroGUI(){
