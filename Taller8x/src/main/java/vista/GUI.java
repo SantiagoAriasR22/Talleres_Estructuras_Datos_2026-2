@@ -2,15 +2,18 @@ package vista;
 
 import controlador.Controlador;
 import java.io.File;
+import static java.lang.System.exit;
 import modelo.Registro;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import modelo.TablaHash;
+import persistencia.Escritura;
 
 public class GUI extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GUI.class.getName());
     private final Controlador controlador = new Controlador();
- 
+   
     public GUI() {
         initComponents();
     }
@@ -21,9 +24,9 @@ public class GUI extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        jComboBox1 = new javax.swing.JComboBox<>();
-        jComboBox2 = new javax.swing.JComboBox<>();
-        jComboBox3 = new javax.swing.JComboBox<>();
+        jComboBoxFile = new javax.swing.JComboBox<>();
+        jComboBoxOperations = new javax.swing.JComboBox<>();
+        jComboBoxDataEstruc = new javax.swing.JComboBox<>();
         jblHash = new javax.swing.JComboBox<>();
         jPanel3 = new javax.swing.JPanel();
         panel = new javax.swing.JPanel();
@@ -40,27 +43,27 @@ public class GUI extends javax.swing.JFrame {
         jPanel2.setBackground(new java.awt.Color(248, 250, 252));
         jPanel2.setForeground(new java.awt.Color(255, 250, 250));
 
-        jComboBox1.setBackground(new java.awt.Color(224, 242, 254));
-        jComboBox1.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
-        jComboBox1.setForeground(new java.awt.Color(15, 23, 42));
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "File", "Open", "Save", "Close" }));
-        jComboBox1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
-        jComboBox1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        jComboBox1.addActionListener(this::jComboBox1ActionPerformed);
+        jComboBoxFile.setBackground(new java.awt.Color(224, 242, 254));
+        jComboBoxFile.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
+        jComboBoxFile.setForeground(new java.awt.Color(15, 23, 42));
+        jComboBoxFile.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "File", "Open", "Save", "Close" }));
+        jComboBoxFile.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
+        jComboBoxFile.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        jComboBoxFile.addActionListener(this::jComboBoxFileActionPerformed);
 
-        jComboBox2.setBackground(new java.awt.Color(224, 242, 254));
-        jComboBox2.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
-        jComboBox2.setForeground(new java.awt.Color(15, 23, 42));
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Operations", "Insert", "Delete", "Search" }));
-        jComboBox2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
-        jComboBox2.addActionListener(this::jComboBox2ActionPerformed);
+        jComboBoxOperations.setBackground(new java.awt.Color(224, 242, 254));
+        jComboBoxOperations.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
+        jComboBoxOperations.setForeground(new java.awt.Color(15, 23, 42));
+        jComboBoxOperations.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Operations", "Insert", "Delete", "Search" }));
+        jComboBoxOperations.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
+        jComboBoxOperations.addActionListener(this::jComboBoxOperationsActionPerformed);
 
-        jComboBox3.setBackground(new java.awt.Color(224, 242, 254));
-        jComboBox3.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
-        jComboBox3.setForeground(new java.awt.Color(15, 23, 42));
-        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Data Structure", "List", "Tree" }));
-        jComboBox3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
-        jComboBox3.addActionListener(this::jComboBox3ActionPerformed);
+        jComboBoxDataEstruc.setBackground(new java.awt.Color(224, 242, 254));
+        jComboBoxDataEstruc.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
+        jComboBoxDataEstruc.setForeground(new java.awt.Color(15, 23, 42));
+        jComboBoxDataEstruc.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Data Structure", "List", "Tree" }));
+        jComboBoxDataEstruc.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
+        jComboBoxDataEstruc.addActionListener(this::jComboBoxDataEstrucActionPerformed);
 
         jblHash.setBackground(new java.awt.Color(224, 242, 254));
         jblHash.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
@@ -74,11 +77,11 @@ public class GUI extends javax.swing.JFrame {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jComboBoxFile, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jComboBoxOperations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jComboBox3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jComboBoxDataEstruc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jblHash, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(43, Short.MAX_VALUE))
@@ -88,10 +91,10 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jComboBox1)
+                    .addComponent(jComboBoxFile)
                     .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jComboBox3, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jComboBoxOperations, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jComboBoxDataEstruc, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jblHash))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -236,18 +239,19 @@ public class GUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    private void jComboBoxFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxFileActionPerformed
         
-        String opcion = (String) jComboBox1.getSelectedItem();
+        String opcion = (String) jComboBoxFile.getSelectedItem();
         
         // Se devuelve el combo a "File" de inmediato: cambiar la seleccion por codigo
         // vuelve a disparar este mismo evento, y asi la re-entrada ya no hace nada.
-        jComboBox1.setSelectedIndex(0);
+        jComboBoxFile.setSelectedIndex(0);
         
         if("Open".equals(opcion)) abrirArchivo();
-        
+        else if("Save".equals(opcion)) save();
+        else if("Close".equals(opcion)) exit(0);
         actualizarColisiones();
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    }//GEN-LAST:event_jComboBoxFileActionPerformed
     
     // Pide estructura y metodo hash, abre el explorador, crea la tabla y la llena.
     // No se permite cargar sin haber elegido las dos cosas: si no, la tabla se
@@ -255,7 +259,7 @@ public class GUI extends javax.swing.JFrame {
     // colisiones que aparecerian no corresponderian a lo que el usuario cree eligio.
     private void abrirArchivo(){
         
-        String estructura = (String) jComboBox3.getSelectedItem();
+        String estructura = (String) jComboBoxDataEstruc.getSelectedItem();
         String metodoHash = (String) jblHash.getSelectedItem();
         
         boolean esLista;
@@ -313,17 +317,17 @@ public class GUI extends javax.swing.JFrame {
         }
     }
 
-    private void jComboBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox3ActionPerformed
+    private void jComboBoxDataEstrucActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxDataEstrucActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox3ActionPerformed
+    }//GEN-LAST:event_jComboBoxDataEstrucActionPerformed
 
-    private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
+    private void jComboBoxOperationsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxOperationsActionPerformed
         
-        String operacion = (String) jComboBox2.getSelectedItem();
+        String operacion = (String) jComboBoxOperations.getSelectedItem();
         
         // Igual que el combo de File: se regresa a "Operations" de una vez para que
         // la re-entrada del evento no vuelva a abrir el dialogo.
-        jComboBox2.setSelectedIndex(0);
+        jComboBoxOperations.setSelectedIndex(0);
         
         if("Operations".equals(operacion)) return;
         
@@ -335,7 +339,7 @@ public class GUI extends javax.swing.JFrame {
         if("Insert".equals(operacion)) insertar();
         else if("Delete".equals(operacion)) eliminar();
         else if("Search".equals(operacion)) buscar();
-    }//GEN-LAST:event_jComboBox2ActionPerformed
+    }//GEN-LAST:event_jComboBoxOperationsActionPerformed
 
     // ------------------------------------------------------------------
     // Operaciones del menu Operations
@@ -426,6 +430,47 @@ public class GUI extends javax.swing.JFrame {
             + "Gender:     " + encontrado.getGenero(),
               javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }
+    public void save(){
+        if(!controlador.hayTabla()){
+            aviso("Primero cargue un archivo CSV desde el menú File.", 
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        String estructura = (String) jComboBoxDataEstruc.getSelectedItem();
+        String metodoHash = (String) jblHash.getSelectedItem();
+        
+        boolean esLista;
+        if("List".equals(estructura)){
+            esLista = true;
+        } else if("Tree".equals(estructura)){
+            esLista = false;
+        } else {
+            aviso("Seleccione una estructura válida (List o Tree) antes de guardar.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        boolean esDivision;
+        if("Division".equals(metodoHash)){
+            esDivision = true;
+        } else if("Multiplication".equals(metodoHash)){
+            esDivision = false;
+        } else {
+            aviso("Seleccione un método hash válido (Division o Multiplication) antes de guardar.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if(controlador.guardarDatos(esLista, esDivision)){
+            actualizarColisiones(); // Refresca el número grande en pantalla
+            aviso("Archivo guardado y tabla actualizada (" + estructura + " - " + metodoHash + ").", 
+                  javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            aviso("No se pudo guardar el archivo.", 
+                  javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
     
     // Pide un plate por teclado. Devuelve null si se cancela o si queda vacio.
     private String pedirPlate(String titulo, String mensaje){
@@ -458,9 +503,9 @@ public class GUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
-    private javax.swing.JComboBox<String> jComboBox3;
+    private javax.swing.JComboBox<String> jComboBoxDataEstruc;
+    private javax.swing.JComboBox<String> jComboBoxFile;
+    private javax.swing.JComboBox<String> jComboBoxOperations;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;

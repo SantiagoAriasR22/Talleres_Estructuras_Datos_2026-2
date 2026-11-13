@@ -3,13 +3,15 @@ package controlador;
 import java.io.File;
 import modelo.Registro;
 import modelo.TablaHash;
+import persistencia.Escritura;
 import persistencia.Lectura;
 
 public class Controlador {
     
     private TablaHash tablaHash;
     private Lectura lectura = new Lectura();
-    
+    private final Escritura escritura = new Escritura();
+    private File archivoActual;
     public Controlador(){}
     
     public void crearTabla(boolean esLista, boolean esDivision){
@@ -17,7 +19,33 @@ public class Controlador {
     }
     
     public int cargarDatos(File archivo){ 
-        return (tablaHash == null) ? 0 : lectura.lecturaRegistros(archivo, tablaHash);
+        if (tablaHash == null) return 0;
+        
+        int cargados = lectura.lecturaRegistros(archivo, tablaHash);
+        if (cargados > 0) {
+            this.archivoActual = archivo; // Guardamos la referencia del archivo abierto
+        }
+        return cargados;
+    }
+    
+    public boolean guardarDatos(boolean nuevaEsLista, boolean nuevaEsDivision){
+        if (tablaHash == null || archivoActual == null) {
+            return false;
+        }
+        
+        // 1. Guardamos en el CSV los cambios (inserciones/borrados) que tenga la tabla actual
+        escritura.actualizarArchivo(archivoActual, tablaHash);
+        
+        // 2. Recreamos la tabla con la estructura y metodo hash seleccionados en la GUI
+        tablaHash = new TablaHash(nuevaEsLista, nuevaEsDivision);
+        
+        // 3. Recargamos los registros para recalcular indices, nodos y colisiones
+        int cargados = lectura.lecturaRegistros(archivoActual, tablaHash);
+        
+        // 4. Actualizamos el CSV para que quede con el orden de la nueva estructura (lista o pre-orden)
+        escritura.actualizarArchivo(archivoActual, tablaHash);
+        
+        return cargados >= 0;
     }
     
     public void cargarRegistroGUI(){
