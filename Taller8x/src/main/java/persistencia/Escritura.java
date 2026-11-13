@@ -13,26 +13,6 @@ import modelo.TablaHash;
 
 public class Escritura {
     
-    //aqui se guarda el cambio en el documento directamente aunque no le de a save(primera idea)
-    public void saveInsert (File archivo, Registro registro){
-        
-        
-        //si el FileWriter recibe como segundo parametro un true, escribe al final del archivo
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivo, true))){
-            
-            bw.write(registro.toCSV());
-            bw.newLine();
-                         
-            System.out.println("Insercion completada(ha sido guardada)");
-            
-        }
-        catch(Exception e){
-            System.out.println("Error en la escritura del archivo csv: "+e.getMessage()); //getMessage() es un metodo que extrae un mensaje corto explicando la causa directa del error
-            e.printStackTrace(); //muestra una lista de archivos y lineas de codigo organizados de manera inversa, que me ayudan a identificar en donde se rompio el programa, mas exactamente en la linea 1
-        }
-    }
-    
-    
     public void actualizarArchivo(File archivo, TablaHash miTabla) {
         
         // false para sobrescribir el archivo completo con los datos actualizados
@@ -58,7 +38,7 @@ public class Escritura {
                     Arbol<Registro> arbolSlot = (Arbol<Registro>) miTabla.getTablaHash().get(i);
                     
                     if (arbolSlot.getRaiz() != null) {
-                        escribirArbolInOrden(arbolSlot.getRaiz(), bw);
+                        escribirArbolPreOrden(arbolSlot.getRaiz(), bw);
                     }
                 }
             }
@@ -70,21 +50,23 @@ public class Escritura {
             e.printStackTrace();
         }
     }
-    // Método auxiliar recursivo para recorrer el árbol de cada slot
-    private void escribirArbolInOrden(NodoArbol<Registro> nodo, BufferedWriter bw) throws IOException {
+    
+    // Método auxiliar recursivo para recorrer el árbol de cada slot.
+    // Se recorre en PRE-ORDEN (raíz, izquierdo, derecho) y no en in-orden, a propósito:
+    // al recargar el CSV los registros se reinsertan en el orden del archivo, y la
+    // secuencia pre-orden de un BST es la única que reproduce exactamente el mismo
+    // árbol. Con in-orden la secuencia salía ascendente y cada guardado+recarga
+    // degeneraba cada árbol en una cadena hacia la derecha.
+    private void escribirArbolPreOrden(NodoArbol<Registro> nodo, BufferedWriter bw) throws IOException {
         if (nodo != null) {
-            escribirArbolInOrden(nodo.getIzq(), bw);
-            
-            
-            Registro reg = (Registro) nodo.getInformacion(); 
+            Registro reg = (Registro) nodo.getInformacion();
             bw.write(reg.toCSV());
             bw.newLine();
-            
-            escribirArbolInOrden(nodo.getDer(), bw);
+
+            escribirArbolPreOrden(nodo.getIzq(), bw);
+            escribirArbolPreOrden(nodo.getDer(), bw);
         }
     }
     
-    
-    
-    }
+}
 

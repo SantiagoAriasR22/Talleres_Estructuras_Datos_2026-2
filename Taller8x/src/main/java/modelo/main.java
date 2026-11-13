@@ -2,8 +2,12 @@ package modelo;
 
 import vista.GUI;
 
+//Elaborado por:
+//David Santiago Arias Rojas 0222510022
+//Alex David Florez Cerro 0222510031
+
 public class main {
-    //recordatorio para no olvidar el boolean y la ventana emergente de "Guardar Cambios/descartar" y elaborado por:
+   
     public static void main(String[] args) {
         
         java.awt.EventQueue.invokeLater(() -> {

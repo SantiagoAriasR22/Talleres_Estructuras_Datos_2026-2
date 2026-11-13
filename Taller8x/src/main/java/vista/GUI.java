@@ -2,6 +2,7 @@ package vista;
 
 import controlador.Controlador;
 import java.io.File;
+import modelo.Registro;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -52,6 +53,7 @@ public class GUI extends javax.swing.JFrame {
         jComboBox2.setForeground(new java.awt.Color(15, 23, 42));
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Operations", "Insert", "Delete", "Search" }));
         jComboBox2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
+        jComboBox2.addActionListener(this::jComboBox2ActionPerformed);
 
         jComboBox3.setBackground(new java.awt.Color(224, 242, 254));
         jComboBox3.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
@@ -237,40 +239,219 @@ public class GUI extends javax.swing.JFrame {
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         
         String opcion = (String) jComboBox1.getSelectedItem();
+        
+        // Se devuelve el combo a "File" de inmediato: cambiar la seleccion por codigo
+        // vuelve a disparar este mismo evento, y asi la re-entrada ya no hace nada.
+        jComboBox1.setSelectedIndex(0);
+        
+        if("Open".equals(opcion)) abrirArchivo();
+        
+        actualizarColisiones();
+    }//GEN-LAST:event_jComboBox1ActionPerformed
+    
+    // Pide estructura y metodo hash, abre el explorador, crea la tabla y la llena.
+    // No se permite cargar sin haber elegido las dos cosas: si no, la tabla se
+    // construiria con unos valores por defecto que la GUI no esta mostrando, y las
+    // colisiones que aparecerian no corresponderian a lo que el usuario cree eligio.
+    private void abrirArchivo(){
+        
         String estructura = (String) jComboBox3.getSelectedItem();
         String metodoHash = (String) jblHash.getSelectedItem();
         
-        if("Open".equals(opcion)){
-            JFileChooser explorador = new JFileChooser();
-            explorador.setDialogTitle("Seleccionar archivo CSV de placas");
-            
-            FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv");
-            explorador.setFileFilter(filtro);
-            
-            int respuesta = explorador.showOpenDialog(this);
-            
-            if (respuesta == JFileChooser.APPROVE_OPTION) {
-                
-                File archivoSeleccionado = explorador.getSelectedFile();
-                String rutaCompleta = archivoSeleccionado.getAbsolutePath();
-
-                lblRutaArchivo.setText(rutaCompleta);
-                
-                boolean esLista = "List".equals(estructura);
-                boolean esDivision = "Division".equals(metodoHash);
-                
-                controlador.crearTabla(esLista, esDivision);
-                controlador.cargarDatos(archivoSeleccionado);
-            }
+        boolean esLista;
+        
+        if("List".equals(estructura)){
+            esLista = true;
+        }
+        else if("Tree".equals(estructura)){
+            esLista = false;
+        }
+        else{
+            aviso("Seleccione la estructura (List o Tree) antes de cargar el archivo.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
         }
         
-        jComboBox1.setSelectedIndex(0);
-        jblColisiones.setText(String.valueOf(controlador.cargarColisiones()));
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+        boolean esDivision;
+        
+        if("Division".equals(metodoHash)){
+            esDivision = true;
+        }
+        else if("Multiplication".equals(metodoHash)){
+            esDivision = false;
+        }
+        else{
+            aviso("Seleccione el metodo hash (Division o Multiplication) antes de cargar el archivo.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        JFileChooser explorador = new JFileChooser();
+        explorador.setDialogTitle("Seleccionar archivo CSV de placas");
+        
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv");
+        explorador.setFileFilter(filtro);
+        
+        if (explorador.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        
+        File archivoSeleccionado = explorador.getSelectedFile();
+        
+        lblRutaArchivo.setText(archivoSeleccionado.getAbsolutePath());
+        
+        controlador.crearTabla(esLista, esDivision);
+        int cargados = controlador.cargarDatos(archivoSeleccionado);
+        
+        if(cargados > 0){
+            aviso("El archivo se cargo con exito\n\nRegistros cargados: " + cargados,
+                  javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+        else{
+            aviso("No se pudo cargar ningun registro\n"
+                + "Verifique que el archivo exista y que tenga el formato\n"
+                + "plate;first_name;last_name;gender",
+                  javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void jComboBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox3ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox3ActionPerformed
+
+    private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
+        
+        String operacion = (String) jComboBox2.getSelectedItem();
+        
+        // Igual que el combo de File: se regresa a "Operations" de una vez para que
+        // la re-entrada del evento no vuelva a abrir el dialogo.
+        jComboBox2.setSelectedIndex(0);
+        
+        if("Operations".equals(operacion)) return;
+        
+        if(!controlador.hayTabla()){
+            aviso("Primero cargue un archivo CSV con File > Open.", javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if("Insert".equals(operacion)) insertar();
+        else if("Delete".equals(operacion)) eliminar();
+        else if("Search".equals(operacion)) buscar();
+    }//GEN-LAST:event_jComboBox2ActionPerformed
+
+    // ------------------------------------------------------------------
+    // Operaciones del menu Operations
+    // ------------------------------------------------------------------
+    
+    private void insertar(){
+        
+        javax.swing.JTextField txtPlate = new javax.swing.JTextField(12);
+        javax.swing.JTextField txtNombre = new javax.swing.JTextField(12);
+        javax.swing.JTextField txtApellido = new javax.swing.JTextField(12);
+        
+        String[] generos = {"Female", "Male", "Binary", "Helicopter"};
+        javax.swing.JComboBox<String> cbGenero = new javax.swing.JComboBox<>(generos);
+        
+        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridLayout(0, 2, 6, 6));
+        formulario.add(new javax.swing.JLabel("Plate:"));
+        formulario.add(txtPlate);
+        formulario.add(new javax.swing.JLabel("First name:"));
+        formulario.add(txtNombre);
+        formulario.add(new javax.swing.JLabel("Last name:"));
+        formulario.add(txtApellido);
+        formulario.add(new javax.swing.JLabel("Gender:"));
+        formulario.add(cbGenero);
+        
+        int respuesta = javax.swing.JOptionPane.showConfirmDialog(this, formulario,
+                "Insertar registro", javax.swing.JOptionPane.OK_CANCEL_OPTION,
+                javax.swing.JOptionPane.PLAIN_MESSAGE);
+        
+        if(respuesta != javax.swing.JOptionPane.OK_OPTION) return;
+        
+        String plate = txtPlate.getText().trim();
+        
+        if(plate.isEmpty()){
+            aviso("El plate no puede estar vacio.", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // El plate es el id: si ya existe, insertar duplicaria el registro.
+        if(controlador.buscarRegistro(plate) != null){
+            aviso("Ya existe un registro con el plate " + plate + ".",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        Registro nuevo = new Registro(plate, txtNombre.getText().trim(),
+                txtApellido.getText().trim(), (String) cbGenero.getSelectedItem());
+        
+        controlador.insertarRegistro(nuevo);
+        actualizarColisiones();
+        
+        aviso("Registro insertado: " + plate, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void eliminar(){
+        
+        String plate = pedirPlate("Eliminar registro", "Plate del registro a eliminar:");
+        if(plate == null) return;
+        
+        boolean borrado = controlador.eliminarRegistro(plate);
+        
+        actualizarColisiones();
+        
+        if(borrado){
+            aviso("Registro eliminado: " + plate, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+        else{
+            aviso("No existe un registro con el plate " + plate + ".",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    
+    private void buscar(){
+        
+        String plate = pedirPlate("Buscar registro", "Plate del registro a buscar:");
+        if(plate == null) return;
+        
+        Registro encontrado = controlador.buscarRegistro(plate);
+        
+        if(encontrado == null){
+            aviso("No existe un registro con el plate " + plate + ".",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        aviso("Plate:      " + encontrado.getPlate() + "\n"
+            + "First name: " + encontrado.getFirtsName() + "\n"
+            + "Last name:  " + encontrado.getLastName() + "\n"
+            + "Gender:     " + encontrado.getGenero(),
+              javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    // Pide un plate por teclado. Devuelve null si se cancela o si queda vacio.
+    private String pedirPlate(String titulo, String mensaje){
+        
+        String texto = javax.swing.JOptionPane.showInputDialog(this, mensaje, titulo,
+                javax.swing.JOptionPane.QUESTION_MESSAGE);
+        
+        if(texto == null) return null;
+        
+        texto = texto.trim();
+        
+        if(texto.isEmpty()){
+            aviso("El plate no puede estar vacio.", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+        
+        return texto;
+    }
+    
+    private void actualizarColisiones(){
+        jblColisiones.setText(String.valueOf(controlador.cargarColisiones()));
+    }
+    
+    private void aviso(String mensaje, int tipo){
+        javax.swing.JOptionPane.showMessageDialog(this, mensaje, "Taller 8", tipo);
+    }
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> new GUI().setVisible(true));
