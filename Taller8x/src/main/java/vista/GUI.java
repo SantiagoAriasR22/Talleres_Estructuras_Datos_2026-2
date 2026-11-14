@@ -1,9 +1,10 @@
 package vista;
 
 import controlador.Controlador;
+import estadisticas.Estadisticas;
 import java.io.File;
-import static java.lang.System.exit;
 import modelo.Registro;
+import modelo.SlotVista;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -11,14 +12,189 @@ public class GUI extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GUI.class.getName());
     private final Controlador controlador = new Controlador();
+    
+    // Contenedor donde se apilan las filas de la vista de slots.
+    private final javax.swing.JPanel contenedorSlots = new javax.swing.JPanel();
    
     public GUI() {
         initComponents();
+        configurarVistaSlots();
         
         // El combo del metodo hash no tiene EventHandler en el .form, asi que se
         // conecta aqui, fuera del bloque generado, para que NetBeans no lo borre
         // al regenerar initComponents().
         jblHash.addActionListener(e -> actualizarEstructura());
+        
+        // Cerrar con la X de la ventana tambien debe preguntar por los cambios
+        // sin guardar, asi que se desactiva el cierre automatico y se maneja aparte.
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                cerrarAplicacion();
+            }
+        });
+    }
+    
+    // Coloca la vista de slots en el area libre de la ventana, encima de la barra
+    // de estado y dentro de un JScrollPane con scroll en los dos ejes.
+    private void configurarVistaSlots(){
+        
+        contenedorSlots.setLayout(new javax.swing.BoxLayout(contenedorSlots, javax.swing.BoxLayout.Y_AXIS));
+        contenedorSlots.setBackground(new java.awt.Color(248, 250, 252));
+        contenedorSlots.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(contenedorSlots);
+        scroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        scroll.getViewport().setBackground(new java.awt.Color(248, 250, 252));
+        scroll.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.getHorizontalScrollBar().setUnitIncrement(24);
+        scroll.getVerticalScrollBar().setUnitIncrement(24);
+        
+        // Un JScrollPane sin tamano preferido adopta el del contenido, que aqui
+        // puede medir decenas de miles de pixeles. Se le fija uno razonable para
+        // que no infle el tamano de la ventana; el BorderLayout lo estira igual.
+        scroll.setPreferredSize(new java.awt.Dimension(640, 360));
+        
+        // jPanel3 solo tenia la barra de estado: se reemplaza su contenido por el
+        // scroll de slots en el medio y la barra de estado (ruta del archivo) abajo.
+        jPanel3.removeAll();
+        jPanel3.setLayout(new java.awt.BorderLayout());
+        jPanel3.add(scroll, java.awt.BorderLayout.CENTER);
+        jPanel3.add(panel, java.awt.BorderLayout.SOUTH);
+        
+        jPanel3.revalidate();
+        jPanel3.repaint();
+        
+        actualizarSlots();
+    }
+    
+    // Corre la prueba de rendimiento y muestra el informe en una ventana emergente.
+    // Tarda decimas de segundo, por eso corre directo en el hilo de la interfaz.
+    private void ejecutarPrueba(){
+        
+        // No se puede medir si no hay datos cargados: la prueba trabaja sobre el
+        // archivo que el usuario abrio con File > Open.
+        if(!controlador.hayTabla()){
+            aviso("Load a CSV file first using File > Open, then run the test.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        File archivo = controlador.getArchivoActual();
+        
+        if(archivo == null || !archivo.exists()){
+            aviso("The loaded file could not be found.",
+                  javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        Estadisticas.Informe informe;
+        
+        setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+        try {
+            informe = Estadisticas.calcular(archivo);
+        }
+        catch(RuntimeException ex){
+            aviso("The test failed:\n" + ex.getMessage(),
+                  javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        finally {
+            setCursor(java.awt.Cursor.getDefaultCursor());
+        }
+        
+        if(informe.registros == 0){
+            aviso("No records could be read from:\n" + archivo.getAbsolutePath(),
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        javax.swing.JEditorPane vista = new javax.swing.JEditorPane("text/html", construirInformeHTML(informe));
+        vista.setEditable(false);
+        vista.setCaretPosition(0);
+        vista.setBackground(java.awt.Color.WHITE);
+        
+        javax.swing.JScrollPane scrollInforme = new javax.swing.JScrollPane(vista);
+        scrollInforme.setPreferredSize(new java.awt.Dimension(740, 520));
+        scrollInforme.getViewport().setBackground(java.awt.Color.WHITE);
+        
+        javax.swing.JOptionPane.showMessageDialog(this, scrollInforme,
+                "Performance test", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    // Arma el informe como HTML para que se vea como tablas, no como texto plano.
+    private String construirInformeHTML(Estadisticas.Informe informe){
+        
+        StringBuilder h = new StringBuilder();
+        
+        h.append("<html><body><font face='Segoe UI' size='3'>");
+        h.append("<h3>Performance test</h3>");
+        h.append("<p>File: <b>").append(informe.archivo).append("</b><br>");
+        h.append("Records: ").append(informe.registros)
+         .append(" &nbsp;|&nbsp; Warm-up: ").append(informe.calentamiento)
+         .append(" runs &nbsp;|&nbsp; Repetitions: ").append(informe.repeticiones)
+         .append(" runs (median)</p>");
+        
+        h.append("<b>Average time per operation</b>");
+        h.append("<table border='1' cellspacing='0' cellpadding='5'>");
+        h.append("<tr bgcolor='#dbeafe'>")
+         .append("<th align='left'>Method</th>")
+         .append("<th align='left'>Operation</th>")
+         .append("<th>List (ns)</th>")
+         .append("<th>Tree (ns)</th>")
+         .append("<th>Improvement</th>")
+         .append("</tr>");
+        
+        for(Estadisticas.Fila f : informe.filas){
+            
+            double mejora = f.mejora();
+            String color = (mejora >= 0) ? "#15803d" : "#b91c1c";
+            String signo = (mejora >= 0) ? "+" : "";
+            
+            h.append("<tr>")
+             .append("<td>").append(f.metodo).append("</td>")
+             .append("<td>").append(f.operacion).append("</td>")
+             .append("<td align='right'>").append(numero(f.lista)).append("</td>")
+             .append("<td align='right'>").append(numero(f.arbol)).append("</td>")
+             .append("<td align='right'><font color='").append(color).append("'>")
+             .append(signo).append(numero(mejora)).append(" %</font></td>")
+             .append("</tr>");
+        }
+        
+        h.append("</table>");
+        
+        h.append("<br><b>Resulting structure</b>");
+        h.append("<table border='1' cellspacing='0' cellpadding='5'>");
+        h.append("<tr bgcolor='#dbeafe'>")
+         .append("<th align='left'>Method</th>")
+         .append("<th align='left'>Structure</th>")
+         .append("<th>Slots</th>")
+         .append("<th>Avg chain</th>")
+         .append("<th>Avg height</th>")
+         .append("<th>Max</th>")
+         .append("</tr>");
+        
+        for(Estadisticas.Estructura e : informe.estructura){
+            h.append("<tr>")
+             .append("<td>").append(e.metodo).append("</td>")
+             .append("<td>").append(e.tipo).append("</td>")
+             .append("<td align='right'>").append(e.slots).append("</td>")
+             .append("<td align='right'>").append(e.cadena < 0 ? "-" : numero(e.cadena)).append("</td>")
+             .append("<td align='right'>").append(e.altura < 0 ? "-" : numero(e.altura)).append("</td>")
+             .append("<td align='right'>").append(e.maximo).append("</td>")
+             .append("</tr>");
+        }
+        
+        h.append("</table>");
+        h.append("</font></body></html>");
+        
+        return h.toString();
+    }
+    
+    private String numero(double valor){
+        return String.format(java.util.Locale.US, "%.1f", valor);
     }
 
     @SuppressWarnings("unchecked")
@@ -31,6 +207,8 @@ public class GUI extends javax.swing.JFrame {
         jComboBoxOperations = new javax.swing.JComboBox<>();
         jComboBoxDataEstruc = new javax.swing.JComboBox<>();
         jblHash = new javax.swing.JComboBox<>();
+        jPanel5 = new javax.swing.JPanel();
+        jButton2 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         panel = new javax.swing.JPanel();
         lblRutaArchivo = new javax.swing.JLabel();
@@ -74,15 +252,42 @@ public class GUI extends javax.swing.JFrame {
         jblHash.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Hash Method", "Division", "Multiplication" }));
         jblHash.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(226, 232, 240)));
 
+        jPanel5.setBackground(new java.awt.Color(248, 250, 252));
+
+        jButton2.setBackground(new java.awt.Color(224, 242, 254));
+        jButton2.setFont(new java.awt.Font("Microsoft Tai Le", 1, 14)); // NOI18N
+        jButton2.setText("Run a performance test");
+        jButton2.addActionListener(this::jButton2ActionPerformed);
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jComboBoxFile, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jComboBoxOperations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jComboBoxFile, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jComboBoxOperations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jComboBoxDataEstruc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -99,7 +304,9 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(jComboBoxOperations, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jComboBoxDataEstruc, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jblHash))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         jPanel3.setBackground(new java.awt.Color(248, 250, 252));
@@ -115,7 +322,7 @@ public class GUI extends javax.swing.JFrame {
             panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblRutaArchivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblRutaArchivo, javax.swing.GroupLayout.DEFAULT_SIZE, 1092, Short.MAX_VALUE)
                 .addContainerGap())
         );
         panelLayout.setVerticalGroup(
@@ -252,8 +459,8 @@ public class GUI extends javax.swing.JFrame {
         
         if("Open".equals(opcion)) abrirArchivo();
         else if("Save".equals(opcion)) save();
-        else if("Close".equals(opcion)) exit(0);
-        actualizarColisiones();
+        else if("Close".equals(opcion)) cerrarAplicacion();
+        actualizarVista();
     }//GEN-LAST:event_jComboBoxFileActionPerformed
     
     // Pide estructura y metodo hash, abre el explorador, crea la tabla y la llena.
@@ -274,7 +481,7 @@ public class GUI extends javax.swing.JFrame {
             esLista = false;
         }
         else{
-            aviso("Seleccione la estructura (List o Tree) antes de cargar el archivo.",
+            aviso("Select the data structure (List or Tree) before loading the file.",
                   javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -288,15 +495,15 @@ public class GUI extends javax.swing.JFrame {
             esDivision = false;
         }
         else{
-            aviso("Seleccione el metodo hash (Division o Multiplication) antes de cargar el archivo.",
+            aviso("Select the hash method (Division or Multiplication) before loading the file.",
                   javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
         
         JFileChooser explorador = new JFileChooser();
-        explorador.setDialogTitle("Seleccionar archivo CSV de placas");
+        explorador.setDialogTitle("Select CSV file");
         
-        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv");
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("CSV files (*.csv)", "csv");
         explorador.setFileFilter(filtro);
         
         if (explorador.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
@@ -309,12 +516,12 @@ public class GUI extends javax.swing.JFrame {
         int cargados = controlador.cargarDatos(archivoSeleccionado);
         
         if(cargados > 0){
-            aviso("El archivo se cargo con exito\n\nRegistros cargados: " + cargados,
+            aviso("The file was loaded successfully.\n\nRecords loaded: " + cargados,
                   javax.swing.JOptionPane.INFORMATION_MESSAGE);
         }
         else{
-            aviso("No se pudo cargar ningun registro\n"
-                + "Verifique que el archivo exista y que tenga el formato\n"
+            aviso("No records could be loaded\n"
+                + "Check that the file exists and has the format\n"
                 + "plate;first_name;last_name;gender",
                   javax.swing.JOptionPane.ERROR_MESSAGE);
         }
@@ -345,7 +552,7 @@ public class GUI extends javax.swing.JFrame {
         else return;                          // placeholder: se ignora sin molestar
         
         controlador.cambiarEstructura(esLista, esDivision);
-        actualizarColisiones();
+        actualizarVista();
     }
 
     private void jComboBoxOperationsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxOperationsActionPerformed
@@ -359,7 +566,7 @@ public class GUI extends javax.swing.JFrame {
         if("Operations".equals(operacion)) return;
         
         if(!controlador.hayTabla()){
-            aviso("Primero cargue un archivo CSV con File > Open.", javax.swing.JOptionPane.WARNING_MESSAGE);
+            aviso("Load a CSV file first using File > Open.", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -367,6 +574,10 @@ public class GUI extends javax.swing.JFrame {
         else if("Delete".equals(operacion)) eliminar();
         else if("Search".equals(operacion)) buscar();
     }//GEN-LAST:event_jComboBoxOperationsActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        ejecutarPrueba();
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     // ------------------------------------------------------------------
     // Operaciones del menu Operations
@@ -392,7 +603,7 @@ public class GUI extends javax.swing.JFrame {
         formulario.add(cbGenero);
         
         int respuesta = javax.swing.JOptionPane.showConfirmDialog(this, formulario,
-                "Insertar registro", javax.swing.JOptionPane.OK_CANCEL_OPTION,
+                "Insert record", javax.swing.JOptionPane.OK_CANCEL_OPTION,
                 javax.swing.JOptionPane.PLAIN_MESSAGE);
         
         if(respuesta != javax.swing.JOptionPane.OK_OPTION) return;
@@ -400,13 +611,13 @@ public class GUI extends javax.swing.JFrame {
         String plate = txtPlate.getText().trim();
         
         if(plate.isEmpty()){
-            aviso("El plate no puede estar vacio.", javax.swing.JOptionPane.ERROR_MESSAGE);
+            aviso("The plate cannot be empty.", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         // El plate es el id: si ya existe, insertar duplicaria el registro.
         if(controlador.buscarRegistro(plate) != null){
-            aviso("Ya existe un registro con el plate " + plate + ".",
+            aviso("A record with plate " + plate + " already exists.",
                   javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -415,38 +626,38 @@ public class GUI extends javax.swing.JFrame {
                 txtApellido.getText().trim(), (String) cbGenero.getSelectedItem());
         
         controlador.insertarRegistro(nuevo);
-        actualizarColisiones();
+        actualizarVista();
         
-        aviso("Registro insertado: " + plate, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        aviso("Record inserted: " + plate, javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void eliminar(){
         
-        String plate = pedirPlate("Eliminar registro", "Plate del registro a eliminar:");
+        String plate = pedirPlate("Delete record", "Plate of the record to delete:");
         if(plate == null) return;
         
         boolean borrado = controlador.eliminarRegistro(plate);
         
-        actualizarColisiones();
+        actualizarVista();
         
         if(borrado){
-            aviso("Registro eliminado: " + plate, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            aviso("Record deleted: " + plate, javax.swing.JOptionPane.INFORMATION_MESSAGE);
         }
         else{
-            aviso("No existe un registro con el plate " + plate + ".",
+            aviso("No record found with plate " + plate + ".",
                   javax.swing.JOptionPane.WARNING_MESSAGE);
         }
     }
     
     private void buscar(){
         
-        String plate = pedirPlate("Buscar registro", "Plate del registro a buscar:");
+        String plate = pedirPlate("Search record", "Plate of the record to search:");
         if(plate == null) return;
         
         Registro encontrado = controlador.buscarRegistro(plate);
         
         if(encontrado == null){
-            aviso("No existe un registro con el plate " + plate + ".",
+            aviso("No record found with plate " + plate + ".",
                   javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -461,25 +672,25 @@ public class GUI extends javax.swing.JFrame {
     // Guarda el estado actual de la tabla. Ya no cambia la estructura: eso lo hace
     // el combo Data Structure / Hash Method al seleccionarse.
     // Se pide el destino para no sobrescribir por accidente el dataset original.
-    public void save(){
+    public boolean save(){
         
         if(!controlador.hayTabla()){
-            aviso("Primero cargue un archivo CSV desde el menú File.", 
+            aviso("Load a CSV file first using File > Open.", 
                   javax.swing.JOptionPane.WARNING_MESSAGE);
-            return;
+            return false;
         }
         
         JFileChooser explorador = new JFileChooser();
-        explorador.setDialogTitle("Guardar estado de la tabla");
+        explorador.setDialogTitle("Save table state");
         
-        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv");
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("CSV files (*.csv)", "csv");
         explorador.setFileFilter(filtro);
         
         if(controlador.getArchivoActual() != null){
             explorador.setSelectedFile(controlador.getArchivoActual());
         }
         
-        if(explorador.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        if(explorador.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return false;
         
         File destino = explorador.getSelectedFile();
         
@@ -488,12 +699,41 @@ public class GUI extends javax.swing.JFrame {
         }
         
         if(controlador.guardarDatos(destino)){
-            aviso("Archivo guardado en:\n" + destino.getAbsolutePath(),
+            aviso("File saved to:\n" + destino.getAbsolutePath(),
                   javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            return true;
         } else {
-            aviso("No se pudo guardar el archivo.\nLa tabla en memoria no se modificó.", 
+            aviso("The file could not be saved.\nThe table in memory was not modified.", 
                   javax.swing.JOptionPane.ERROR_MESSAGE);
+            return false;
         }
+    }
+    
+    // Cierra la aplicacion. Si hay cambios sin guardar, pregunta antes.
+    // Save -> guarda y cierra (si el guardado falla o se cancela, no cierra).
+    // Don't save -> descarta y cierra.
+    // Cancel -> no hace nada.
+    private void cerrarAplicacion(){
+        
+        if(controlador.hayCambios()){
+            
+            int opcion = javax.swing.JOptionPane.showConfirmDialog(this,
+                    "There are unsaved changes.\nDo you want to save them before closing?",
+                    "Unsaved changes",
+                    javax.swing.JOptionPane.YES_NO_CANCEL_OPTION,
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+            
+            if(opcion == javax.swing.JOptionPane.YES_OPTION){
+                if(!save()){
+                    return;              
+                }
+            }
+            else if(opcion != javax.swing.JOptionPane.NO_OPTION){
+                return;                  // cancelo: no se cierra
+            }
+        }
+        
+        System.exit(0);
     }
     
     // Pide un plate por teclado. Devuelve null si se cancela o si queda vacio.
@@ -507,19 +747,85 @@ public class GUI extends javax.swing.JFrame {
         texto = texto.trim();
         
         if(texto.isEmpty()){
-            aviso("El plate no puede estar vacio.", javax.swing.JOptionPane.ERROR_MESSAGE);
+            aviso("The plate cannot be empty.", javax.swing.JOptionPane.ERROR_MESSAGE);
             return null;
         }
         
         return texto;
     }
     
+    // Refresca todo lo que depende del estado de la tabla.
+    private void actualizarVista(){
+        actualizarColisiones();
+        actualizarSlots();
+    }
+    
     private void actualizarColisiones(){
         jblColisiones.setText(String.valueOf(controlador.cargarColisiones()));
     }
     
+    private void actualizarSlots(){
+        
+        contenedorSlots.removeAll();
+        
+        if(!controlador.hayTabla()){
+            contenedorSlots.add(mensajeLista("Load a CSV file using File > Open to view the slots"));
+        }
+        else{
+            
+            java.util.List<SlotVista> slots = controlador.slotsConVarios();
+            
+            if(slots.isEmpty()){
+                contenedorSlots.add(mensajeLista("No slot has more than one record"));
+            }
+            else{
+                for(int i = 0; i < slots.size(); i++){
+                    
+                    SlotVista s = slots.get(i);
+                    
+                    javax.swing.JComponent fila = s.esLista
+                            ? new PanelLista(s.indice, s.placas)
+                            : new PanelArbol(s.indice, s.raiz);
+                    
+                    fila.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+                    contenedorSlots.add(fila);
+                    
+                    if(i < slots.size() - 1){
+                        contenedorSlots.add(separador());
+                    }
+                }
+            }
+        }
+        
+        contenedorSlots.revalidate();
+        contenedorSlots.repaint();
+    }
+    
+    private javax.swing.JLabel mensajeLista(String texto){
+        
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
+        
+        etiqueta.setFont(new java.awt.Font("Microsoft Tai Le", java.awt.Font.PLAIN, 14));
+        etiqueta.setForeground(new java.awt.Color(100, 116, 139));
+        etiqueta.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 10, 0, 0));
+        etiqueta.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        
+        return etiqueta;
+    }
+    
+    private javax.swing.JSeparator separador(){
+        
+        javax.swing.JSeparator linea = new javax.swing.JSeparator();
+        
+        linea.setForeground(new java.awt.Color(226, 232, 240));
+        linea.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 1));
+        linea.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        
+        return linea;
+    }
+    
     private void aviso(String mensaje, int tipo){
-        javax.swing.JOptionPane.showMessageDialog(this, mensaje, "Taller 8", tipo);
+        javax.swing.JOptionPane.showMessageDialog(this, mensaje, "Hash Table", tipo);
     }
 
     public static void main(String args[]) {
@@ -527,6 +833,7 @@ public class GUI extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton2;
     private javax.swing.JComboBox<String> jComboBoxDataEstruc;
     private javax.swing.JComboBox<String> jComboBoxFile;
     private javax.swing.JComboBox<String> jComboBoxOperations;
@@ -535,6 +842,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JLabel jblColisiones;
     private javax.swing.JComboBox<String> jblHash;

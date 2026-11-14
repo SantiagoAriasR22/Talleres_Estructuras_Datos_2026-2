@@ -7,7 +7,7 @@
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>26</maven.compiler.release>
-        <exec.mainClass>com.mycompany.taller8x.Taller8x</exec.mainClass>
+        <maven.compiler.release>11</maven.compiler.release>
+        <exec.mainClass>modelo.main</exec.mainClass>
     </properties>
 </project>

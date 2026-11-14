@@ -3,7 +3,12 @@ package controlador;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import modelo.Arbol;
+import modelo.Lista;
+import modelo.NodoArbol;
+import modelo.NodoLista;
 import modelo.Registro;
+import modelo.SlotVista;
 import modelo.TablaHash;
 import persistencia.Escritura;
 import persistencia.Lectura;
@@ -24,6 +29,10 @@ public class Controlador {
     private boolean esDivision;
     
     private File archivoActual;
+    
+    // true si hubo inserciones o borrados desde la ultima carga o guardado.
+    // Sirve para preguntar antes de cerrar la aplicacion.
+    private boolean hayCambios = false;
     
     public Controlador(){}
     
@@ -48,6 +57,7 @@ public class Controlador {
         registros.clear();
         registros.addAll(leidos);
         archivoActual = archivo;
+        hayCambios = false;
         
         reinsertar();
         
@@ -73,7 +83,16 @@ public class Controlador {
     // No reconstruye nada: la tabla ya esta en el orden de su estructura.
     public boolean guardarDatos(File destino){
         if(tablaHash == null || destino == null) return false;
-        return escritura.actualizarArchivo(destino, tablaHash);
+        
+        boolean escrito = escritura.actualizarArchivo(destino, tablaHash);
+        
+        if(escrito) hayCambios = false;
+        
+        return escrito;
+    }
+    
+    public boolean hayCambios(){
+        return hayCambios;
     }
     
     public File getArchivoActual(){
@@ -98,6 +117,7 @@ public class Controlador {
         if(tablaHash == null) return;
         registros.add(registro);
         tablaHash.insertarRegistro(registro);
+        hayCambios = true;
     }
     
     public boolean eliminarRegistro(String plate){
@@ -112,6 +132,7 @@ public class Controlador {
                     break;
                 }
             }
+            hayCambios = true;
         }
         
         return borrado;
@@ -119,6 +140,48 @@ public class Controlador {
     
     public Registro buscarRegistro(String plate){
         return (tablaHash == null) ? null : tablaHash.buscar(plate);
+    }
+    
+    public List<SlotVista> slotsConVarios(){
+        
+        List<SlotVista> resultado = new ArrayList<>();
+        
+        if(tablaHash == null) return resultado;
+        
+        for(int i = 0; i < tablaHash.getM(); i++){
+            
+            Object contenido = tablaHash.getTablaHash().get(i);
+            
+            if(tablaHash.isEsLista()){
+                
+                Lista<Registro> lista = (Lista<Registro>) contenido;
+                List<String> placas = new ArrayList<>();
+                
+                for(NodoLista<Registro> actual = lista.getHead(); actual != null; actual = actual.getNext()){
+                    placas.add(((Registro) actual.getDato()).getPlate());
+                }
+                
+                if(placas.size() > 1){
+                    resultado.add(new SlotVista(i, true, placas, null));
+                }
+            }
+            else{
+                
+                Arbol<Registro> arbol = (Arbol<Registro>) contenido;
+                NodoArbol<Registro> raiz = (NodoArbol<Registro>) arbol.getRaiz();
+                
+                if(raiz != null && contarNodos(raiz) > 1){
+                    resultado.add(new SlotVista(i, false, null, raiz));
+                }
+            }
+        }
+        
+        return resultado;
+    }
+    
+    private int contarNodos(NodoArbol<Registro> nodo){
+        if(nodo == null) return 0;
+        return 1 + contarNodos((NodoArbol<Registro>) nodo.getIzq()) + contarNodos((NodoArbol<Registro>) nodo.getDer());
     }
     
 }

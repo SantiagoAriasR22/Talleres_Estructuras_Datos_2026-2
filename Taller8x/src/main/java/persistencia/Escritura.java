@@ -46,11 +46,11 @@ public class Escritura {
                 }
             }
             
-            System.out.println("Archivo CSV actualizado correctamente desde la Tabla Hash.");
+            System.out.println("CSV file updated from the hash table.");
             return true;
             
         } catch (IOException e) {
-            System.err.println("Error al actualizar el archivo csv: " + e.getMessage());
+            System.err.println("Error writing the CSV file: " + e.getMessage());
             return false;
         }
     }
