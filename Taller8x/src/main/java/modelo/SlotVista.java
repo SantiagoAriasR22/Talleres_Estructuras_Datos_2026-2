@@ -1,6 +1,6 @@
 package modelo;
 
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Lo que la vista necesita para dibujar un slot de la tabla hash.
@@ -15,10 +15,10 @@ public class SlotVista {
     
     public final int indice;
     public final boolean esLista;
-    public final List<String> placas;
+    public final ArrayList<String> placas;
     public final NodoArbol<Registro> raiz;
     
-    public SlotVista(int indice, boolean esLista, List<String> placas, NodoArbol<Registro> raiz) {
+    public SlotVista(int indice, boolean esLista, ArrayList<String> placas, NodoArbol<Registro> raiz) {
         this.indice = indice;
         this.esLista = esLista;
         this.placas = placas;

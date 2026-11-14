@@ -8,6 +8,7 @@ public class TablaHash{
     private final Integer m=256;
     private final boolean esLista;
     private final boolean esDivision;
+    private final double A = (Math.sqrt(5)-1)/2;
     
     public TablaHash(boolean esLista, boolean esDivision){
         
@@ -15,6 +16,7 @@ public class TablaHash{
         this.esDivision=esDivision;
         this.tablaHash=new ArrayList<>(m);
         
+        //crea un arbol o una lista por cada slot, dependiendo de si esLista es true o false
         for(int i=0; i<m; i++){ 
             tablaHash.add(esLista ? new Lista<Registro>() : new Arbol());
         }
@@ -58,15 +60,12 @@ public class TablaHash{
             
             Lista<Registro> listaSlot = (Lista<Registro>) this.tablaHash.get(indice);
             
-            // Slot vacio: no hay nada que buscar, el plate no puede estar.
+            //si el slot vacio no hay nada que buscar
             if(listaSlot.estaVacia()) return false;
             
             NodoLista<Registro> anterior = null;
             NodoLista<Registro> actual = listaSlot.getHead();
             
-            // Si el slot tiene un solo nodo, el while hace una sola comparacion y sale:
-            // no hay cadena que recorrer. Con mas nodos, avanza con 'anterior' para
-            // poder reenlazar cuando encuentre el que hay que sacar.
             while(actual != null){
                 
                 Registro reg = (Registro) actual.getDato();
@@ -74,22 +73,16 @@ public class TablaHash{
                 if(reg.getPlate().equals(plate)){
                     
                     if(anterior == null){
-                        // Era el primero de la cadena: la cabeza pasa al siguiente.
+                        //si era el primero de la cadena, el head va a ser el que sigue
                         listaSlot.primerNodo = actual.getNext();
                     }
                     else{
-                        // Estaba en medio o al final: se salta el nodo.
+                        //si esta en medio se salta el nodo
                         anterior.sig = actual.getNext();
                     }
                     
-                    // Se mantiene sincronizado con estaVacia(), que mira tamaño.
                     listaSlot.tamaño--;
-                    
-                    // Colisiones = registros - slots ocupados. Al sacar un registro:
-                    //   - si el slot queda con otros, los ocupados no cambian y se
-                    //     pierde una colision, entonces baja
-                    //   - si el slot queda vacio, bajan los registros y los ocupados
-                    //     a la vez, entonces el numero de colisiones no cambia
+
                     if(!listaSlot.estaVacia()) colisiones--;
                     
                     return true;
@@ -99,7 +92,6 @@ public class TablaHash{
                 actual = actual.getNext();
             }
             
-            // Se recorrio el slot completo y el plate no estaba.
             return false;
         }
         else{
@@ -112,11 +104,8 @@ public class TablaHash{
             
             if(borrado[0]){
                 
-                // nodos lo lleva el Arbol para su getNumeroNodos(); se mantiene al dia.
                 arbolSlot.nodos--;
                 
-                // Misma regla que en la lista: si el slot sigue teniendo registros
-                // se pierde una colision; si quedo vacio, el numero no cambia.
                 if(arbolSlot.getRaiz() != null) colisiones--;
             }
             
@@ -125,9 +114,6 @@ public class TablaHash{
         
     }
     
-    // Busca un registro por su plate. Devuelve el Registro, o null si no esta.
-    // Igual que en eliminar: se recalcula el indice a partir del plate y solo se
-    // mira el slot que le corresponde.
     public Registro buscar(String plate){
         
         int k = getK(plate);
@@ -156,9 +142,8 @@ public class TablaHash{
         
     }
     
-    // Busca en el subarbol el nodo cuya llave sea k y cuyo plate coincida.
-    // Misma regla que en el borrado: si la llave coincide pero la placa no es la
-    // buscada, todavia puede haber otro nodo con esa misma k mas a la derecha.
+    //busca en el subarbol el nodo cuya llave sea k y cuyo plate coincida, si la llave coincide pero la placa no es la buscada
+    //todavia puede haber otro nodo con esa misma k mas a la derecha.
     private Registro buscarEnArbol(NodoArbol<Registro> nodo, int k, String plate){
         
         if(nodo == null) return null;
@@ -176,13 +161,6 @@ public class TablaHash{
         return buscarEnArbol(nodo.derecho, k, plate);
     }
     
-    // Elimina del subarbol el nodo cuya llave sea k Y cuyo plate coincida.
-    // Devuelve la raiz del subarbol ya corregida (puede cambiar si se borra la raiz).
-    //
-    // Ojo con las llaves repetidas: adicionar() manda las iguales a la derecha, asi que
-    // cuando la llave coincide pero la placa NO es la buscada, todavia puede haber otro
-    // nodo con esa misma k mas a la derecha. Por eso en ese caso se sigue por la derecha
-    // en vez de cortar la busqueda.
     private NodoArbol<Registro> eliminarEnArbol(NodoArbol<Registro> nodo, int k, String plate, boolean[] borrado){
         
         if(nodo == null) return null;
@@ -210,16 +188,18 @@ public class TablaHash{
         return nodo;
     }
     
-    // Saca el nodo del arbol con los tres casos clasicos del BST.
+    //saca el nodo del arbol segun tres casos
     private NodoArbol<Registro> desconectarNodo(NodoArbol<Registro> nodo){
         
-        // Caso 1 y 2: no tiene hijo izquierdo, o no tiene hijo derecho.
-        // En los dos, el hijo que quede sube al lugar del nodo.
+        //caso 1 no tiene hijo izquierdo
         if(nodo.izquierdo == null) return nodo.derecho;
+        //caso 2 no tiene hijo derecho
         if(nodo.derecho == null) return nodo.izquierdo;
         
-        // Caso 3: dos hijos. Se busca el sucesor in-orden (el menor del subarbol derecho),
-        // se copia su contenido en este nodo y se saca el sucesor de donde estaba.
+        //en cualquiera de los casos anteriores el hijo que quede sube al lugar del nodo
+        
+        //caso 3, si tiene dos hijos se busca el sucesor in-orden, el menor del subarbol derecho,
+        //se copia su contenido en este nodo y se saca el sucesor de donde estaba
         NodoArbol<Registro> sucesor = nodo.derecho;
         
         while(sucesor.izquierdo != null) sucesor = sucesor.izquierdo;
@@ -256,6 +236,7 @@ public class TablaHash{
         return k;
         
     }
+    
     public ArrayList<Object> getTablaHash() {
         return tablaHash;
     }
@@ -274,7 +255,6 @@ public class TablaHash{
     
     public int hashMultiplicacion(int k){
         
-        double A = (Math.sqrt(5)-1)/2;
         return (int) Math.floor(m*((k*A)%1));
     }
     

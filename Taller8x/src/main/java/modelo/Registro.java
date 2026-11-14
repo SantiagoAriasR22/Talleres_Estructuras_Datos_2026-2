@@ -13,6 +13,12 @@ public class Registro {
         this.lastName=lastName;
         this.genero=genero;
     }
+    
+    //se concatenan toda la informacion del registro en un solo string que va a ser retornando, siendo que cada valor esta separado por un ;
+    public String toCSV(){
+        String linea = plate+";"+firstName+";"+lastName+";"+genero;
+        return linea;
+    }
 
     //getters
     public String getFirtsName() {
@@ -29,11 +35,5 @@ public class Registro {
 
     public String getLastName() {
         return lastName;
-    }
-    //methods
-    public String toCSV(){
-        //se concatenan toda la informacion del registro en un solo string que va a ser retornando, siendo que cada valor esta separado por un ;
-        String linea = plate+";"+firstName+";"+lastName+";"+genero;
-        return linea;
     }
 }

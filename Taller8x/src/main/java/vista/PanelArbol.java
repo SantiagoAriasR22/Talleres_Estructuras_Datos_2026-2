@@ -10,7 +10,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
-import java.util.List;
 import modelo.NodoArbol;
 import modelo.Registro;
 
@@ -53,9 +52,9 @@ public class PanelArbol extends javax.swing.JPanel {
 
     // Un elemento por nodo, en el orden en que se asignaron (que es in-orden).
     // El indice en la lista es tambien la posicion horizontal.
-    private final List<String> etiquetas = new ArrayList<>();
-    private final List<Integer> profundidades = new ArrayList<>();
-    private final List<int[]> aristas = new ArrayList<>();   // {padre, hijo}
+    private final ArrayList<String> etiquetas = new ArrayList<>();
+    private final ArrayList<Integer> profundidades = new ArrayList<>();
+    private final ArrayList<int[]> aristas = new ArrayList<>();   // {padre, hijo}
 
     private int profundidadMaxima = 0;
 

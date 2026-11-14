@@ -10,7 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Dibuja UNA fila de la vista de slots cuando los registros estan guardados en
@@ -42,9 +42,9 @@ public class PanelLista extends javax.swing.JPanel {
     private static final Color FLECHA      = new Color(100, 116, 139);
 
     private final int slot;
-    private final List<String> placas;
+    private final ArrayList<String> placas;
 
-    public PanelLista(int slot, List<String> placas) {
+    public PanelLista(int slot, ArrayList<String> placas) {
         initComponents();
 
         this.slot = slot;

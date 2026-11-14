@@ -2,7 +2,6 @@ package controlador;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import modelo.Arbol;
 import modelo.Lista;
 import modelo.NodoArbol;
@@ -19,19 +18,17 @@ public class Controlador {
     private final Lectura lectura = new Lectura();
     private final Escritura escritura = new Escritura();
     
-    // Copia de los registros que hay en la tabla. Es la fuente de verdad para
-    // reconstruir la tabla cuando se cambia de estructura o de metodo hash,
-    // sin tener que leer ni escribir el archivo.
-    private final List<Registro> registros = new ArrayList<>();
+    //Copia de los registros que hay en la tabla para reconstruir la tabla cuando se cambia de estructura o de metodo hash, sin tener que leer ni escribir el archivo.
+    private final ArrayList<Registro> registros = new ArrayList<>();
     
-    // Configuracion vigente de la tabla.
+    //configuracion vigente de la tabla
     private boolean esLista;
     private boolean esDivision;
     
     private File archivoActual;
     
-    // true si hubo inserciones o borrados desde la ultima carga o guardado.
-    // Sirve para preguntar antes de cerrar la aplicacion.
+    //true si hubo inserciones o borrados desde la ultima carga o guardado
+    //sirve para preguntar antes de cerrar la aplicacion
     private boolean hayCambios = false;
     
     public Controlador(){}
@@ -39,17 +36,16 @@ public class Controlador {
     public void crearTabla(boolean esLista, boolean esDivision){
         this.esLista = esLista;
         this.esDivision = esDivision;
-        this.tablaHash = new TablaHash(esLista, esDivision);
     }
     
-    // Devuelve cuantos registros se cargaron, o -1 si no se pudo abrir el archivo.
+    //devuelve cuantos registros se cargaron, o -1 si no se pudo abrir el archivo
     public int cargarDatos(File archivo){ 
         
-        List<Registro> leidos = lectura.leer(archivo);
+        ArrayList<Registro> leidos = lectura.leer(archivo);
         
         if(leidos == null){
-            // No se pudo leer: se deja la tabla como estaba, coherente con la lista
-            // de registros que ya se tenia. Asi no se pierde lo que habia cargado.
+            //si no se pudo leer se deja la tabla como estaba, con la lista de registros que ya se tenia, asi no se pierde lo que se habia cargado
+            //esto en caso de que ya tenga un archivo cargado y quiera cargar otro que no se pudo abrir
             reinsertar();
             return -1;
         }
@@ -64,24 +60,21 @@ public class Controlador {
         return registros.size();
     }
     
-    // Reconstruye la tabla desde cero con la configuracion vigente.
-    // Todo en memoria: no toca el archivo.
+    //reconstruye la tabla desde cero con la configuracion vigente
     private void reinsertar(){
         tablaHash = new TablaHash(esLista, esDivision);
         for(Registro r : registros) tablaHash.insertarRegistro(r);
     }
     
-    // Cambia la estructura y/o el metodo hash y reconstruye la tabla.
-    // Los registros no se pierden: viven en la lista, no en el archivo.
     public void cambiarEstructura(boolean esLista, boolean esDivision){
         this.esLista = esLista;
         this.esDivision = esDivision;
         reinsertar();
     }
     
-    // Escribe el estado actual de la tabla en el archivo indicado.
-    // No reconstruye nada: la tabla ya esta en el orden de su estructura.
+    //escribe el estado actual de la tabla en el archivo indicado
     public boolean guardarDatos(File destino){
+        
         if(tablaHash == null || destino == null) return false;
         
         boolean escrito = escritura.actualizarArchivo(destino, tablaHash);
@@ -99,10 +92,6 @@ public class Controlador {
         return archivoActual;
     }
     
-    public void cargarRegistroGUI(){
-        //aca va la logica para cuando se vayan a pasar los registros a la GUI por medio de lectura (seria lo ideal)
-    }
-    
     public int cargarColisiones(){
         return (tablaHash==null) ? 0 : tablaHash.getColisiones();
     }
@@ -111,8 +100,6 @@ public class Controlador {
         return tablaHash != null;
     }
     
-    // La lista y la tabla se mantienen sincronizadas: si se desincronizan,
-    // una reconstruccion devolveria datos viejos.
     public void insertarRegistro(Registro registro){
         if(tablaHash == null) return;
         registros.add(registro);
@@ -142,9 +129,9 @@ public class Controlador {
         return (tablaHash == null) ? null : tablaHash.buscar(plate);
     }
     
-    public List<SlotVista> slotsConVarios(){
+    public ArrayList<SlotVista> slotsConVarios(){
         
-        List<SlotVista> resultado = new ArrayList<>();
+        ArrayList<SlotVista> resultado = new ArrayList<>();
         
         if(tablaHash == null) return resultado;
         
@@ -155,7 +142,7 @@ public class Controlador {
             if(tablaHash.isEsLista()){
                 
                 Lista<Registro> lista = (Lista<Registro>) contenido;
-                List<String> placas = new ArrayList<>();
+                ArrayList<String> placas = new ArrayList<>();
                 
                 for(NodoLista<Registro> actual = lista.getHead(); actual != null; actual = actual.getNext()){
                     placas.add(((Registro) actual.getDato()).getPlate());

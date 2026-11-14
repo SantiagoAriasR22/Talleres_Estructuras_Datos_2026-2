@@ -13,20 +13,18 @@ import modelo.TablaHash;
 
 public class Escritura {
     
-    // Devuelve true si el archivo quedo escrito, false si no se pudo.
-    // Quien llama esta obligado a revisar el resultado: si se ignora, se puede
-    // reportar "guardado" cuando en realidad no se escribio nada.
+    //devuelve true si el archivo quedo escrito, false si no se pudo
     public boolean actualizarArchivo(File archivo, TablaHash miTabla) {
         
-        // false para sobrescribir el archivo completo con los datos actualizados
+        //false para sobrescribir el archivo completo con los datos actualizados
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(archivo, false))) {
             
-            for (int i = 0; i < miTabla.getM(); i++) {
+            for(int i = 0; i < miTabla.getM(); i++){
                 
-                if (miTabla.isEsLista()) {
+                if(miTabla.isEsLista()){
                     Lista<Registro> listaSlot = (Lista<Registro>) miTabla.getTablaHash().get(i);
                     
-                    if (!listaSlot.estaVacia()) {
+                    if(!listaSlot.estaVacia()){
                         
                         NodoLista<Registro> actual = listaSlot.getHead(); 
                         while (actual != null) {
@@ -37,7 +35,8 @@ public class Escritura {
                             actual = actual.getNext();
                         }
                     }
-                } else {
+                } 
+                else{
                     Arbol<Registro> arbolSlot = (Arbol<Registro>) miTabla.getTablaHash().get(i);
                     
                     if (arbolSlot.getRaiz() != null) {
@@ -55,12 +54,7 @@ public class Escritura {
         }
     }
     
-    // Método auxiliar recursivo para recorrer el árbol de cada slot.
-    // Se recorre en PRE-ORDEN (raíz, izquierdo, derecho) y no en in-orden, a propósito:
-    // al recargar el CSV los registros se reinsertan en el orden del archivo, y la
-    // secuencia pre-orden de un BST es la única que reproduce exactamente el mismo
-    // árbol. Con in-orden la secuencia salía ascendente y cada guardado+recarga
-    // degeneraba cada árbol en una cadena hacia la derecha.
+    //metodo auxiliar recursivo para recorrer el arbol de cada slot en preorden
     private void escribirArbolPreOrden(NodoArbol<Registro> nodo, BufferedWriter bw) throws IOException {
         if (nodo != null) {
             Registro reg = (Registro) nodo.getInformacion();
