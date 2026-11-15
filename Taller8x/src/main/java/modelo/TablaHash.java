@@ -34,7 +34,13 @@ public class TablaHash{
             
             Lista<Registro> listaSlot = (Lista<Registro>) this.tablaHash.get(indice);
             
-            if(!listaSlot.estaVacia()) colisiones++;
+            if(!listaSlot.estaVacia()){
+                for(NodoLista<Registro> actual = listaSlot.getHead(); actual != null; actual = actual.getNext()){
+                    Registro reg = (Registro) actual.getDato();
+                    if(getK(reg.getPlate()) == k && reg.getPlate().equals(registro.getPlate())) return;
+                }
+                colisiones++;
+            }
             
             listaSlot.adicionarFinal(new NodoLista(registro));
             
@@ -71,7 +77,7 @@ public class TablaHash{
                 
                 Registro reg = (Registro) actual.getDato();
                 
-                if(reg.getPlate().equals(plate)){
+                if(getK(reg.getPlate()) == k && reg.getPlate().equals(plate)){
                     
                     if(anterior == null){
                         //si era el primero de la cadena, el head va a ser el que sigue
@@ -129,7 +135,7 @@ public class TablaHash{
                 
                 Registro reg = (Registro) actual.getDato();
                 
-                if(reg.getPlate().equals(plate)) return reg;
+                if(getK(reg.getPlate()) == k && reg.getPlate().equals(plate)) return reg;
             }
             
             return null;
@@ -201,22 +207,22 @@ public class TablaHash{
         
         //caso 3, si tiene dos hijos se busca el sucesor in-orden, el menor del subarbol derecho,
         //se copia su contenido en este nodo y se saca el sucesor de donde estaba
+        NodoArbol<Registro> padreSucesor = nodo;
         NodoArbol<Registro> sucesor = nodo.derecho;
         
-        while(sucesor.izquierdo != null) sucesor = sucesor.izquierdo;
+        while(sucesor.izquierdo != null){
+            padreSucesor = sucesor;
+            sucesor = sucesor.izquierdo;
+        }
         
         nodo.informacion = sucesor.getInformacion();
         nodo.datos = sucesor.getDato();
-        nodo.derecho = quitarMenor(nodo.derecho);
         
-        return nodo;
-    }
-    
-    private NodoArbol<Registro> quitarMenor(NodoArbol<Registro> nodo){
-        
-        if(nodo.izquierdo == null) return nodo.derecho;
-        
-        nodo.izquierdo = quitarMenor(nodo.izquierdo);
+        if(padreSucesor == nodo){
+            padreSucesor.derecho = sucesor.derecho;
+        } else {
+            padreSucesor.izquierdo = sucesor.derecho;
+        }
         
         return nodo;
     }
@@ -251,7 +257,7 @@ public class TablaHash{
     }
     
     public int hashDivision(int k){
-        return k%m;
+        return Math.floorMod(k, m);
     }
     
     public int hashMultiplicacion(int k){

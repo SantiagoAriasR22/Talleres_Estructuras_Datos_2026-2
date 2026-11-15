@@ -490,7 +490,7 @@ public class GUI extends javax.swing.JFrame {
         javax.swing.JTextField txtNombre = new javax.swing.JTextField(12);
         javax.swing.JTextField txtApellido = new javax.swing.JTextField(12);
         
-        String[] generos = {"Female", "Male", "Binary", "Helicopter"};
+        String[] generos = {"Female", "Male", "Non-binary", "Bigender", "Genderqueer"};
         javax.swing.JComboBox<String> cbGenero = new javax.swing.JComboBox<>(generos);
         
         javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridLayout(0, 2, 6, 6));

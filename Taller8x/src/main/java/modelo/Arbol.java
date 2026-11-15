@@ -22,47 +22,30 @@ public class Arbol<T>{
     }
 	
     public void adicionar (T info, long valor, NodoArbol<T> raiz, int nivel){
-        
-        if (raiz==null){
-            
-            this.raiz=new NodoArbol(info, valor);
-            nodos = nodos + 1;
-            updateAltura(this.altura,nivel);
-            updateNivelNumeroMayor(valor,this.numeroMayor,nivel);
-            updateNivelNumeroMenor(valor,this.numeroMenor,nivel);
-	}	
-        else{
-            
-            if (valor<raiz.getDato()){
-                
-		if(raiz.izquierdo==null){
-                    
-                    raiz.izquierdo=new NodoArbol(info, valor);
-                    nodos = nodos + 1;
-                    updateAltura(this.altura,nivel+1);
-                    updateNivelNumeroMenor(valor,this.numeroMenor,nivel+1);
-		}
-		else{
-                    adicionar (info,valor,raiz.izquierdo,nivel+1);
-		}
-                
-            }
-            
-            else {
-                
-		if(raiz.derecho==null){
-                    
-                    raiz.derecho=new NodoArbol(info,valor);
-                    nodos = nodos + 1;
-                    updateAltura(this.altura,nivel+1);
-                    updateNivelNumeroMayor(valor,this.numeroMayor,nivel+1);
-					
-		}
-		else{
-                    adicionar (info,valor,raiz.derecho,nivel+1);
+        NodoArbol<T> nuevo = new NodoArbol<>(info, valor);
+        nodos++;
+
+        if (this.raiz == null) {
+            this.raiz = nuevo;
+            return;
+        }
+
+        NodoArbol<T> actual = this.raiz;
+        while (true) {
+            if (valor < actual.datos) {
+                if (actual.izquierdo == null) {
+                    actual.izquierdo = nuevo;
+                    return;
                 }
+                actual = actual.izquierdo;
+            } else {
+                if (actual.derecho == null) {
+                    actual.derecho = nuevo;
+                    return;
+                }
+                actual = actual.derecho;
             }
-	} 
+        }
     }
 	
     public int getNumeroNodos(){
