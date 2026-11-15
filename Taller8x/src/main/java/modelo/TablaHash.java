@@ -33,15 +33,17 @@ public class TablaHash{
         if(esLista){
             
             Lista<Registro> listaSlot = (Lista<Registro>) this.tablaHash.get(indice);
-            
+
             if(!listaSlot.estaVacia()){
-                for(NodoLista<Registro> actual = listaSlot.getHead(); actual != null; actual = actual.getNext()){
-                    Registro reg = (Registro) actual.getDato();
-                    if(getK(reg.getPlate()) == k && reg.getPlate().equals(registro.getPlate())) return;
+                
+                if(listaSlot.tamaño==1){
+                    colisiones+=2;
                 }
-                colisiones++;
+                else{
+                    colisiones++;
+                }
             }
-            
+
             listaSlot.adicionarFinal(new NodoLista(registro));
             
         }
@@ -49,7 +51,14 @@ public class TablaHash{
             
             Arbol<Registro> arbolSlot = (Arbol<Registro>) this.tablaHash.get(indice);
             
-            if(arbolSlot.getRaiz()!=null) colisiones++;
+            if(arbolSlot.getRaiz()!=null){
+                if(arbolSlot.getNumeroNodos()==1){
+                    colisiones+=2;
+                }
+                else{
+                    colisiones++;
+                }
+            }
 
             arbolSlot.adicionar(registro, k, arbolSlot.getRaiz(), 0);
             
@@ -90,7 +99,8 @@ public class TablaHash{
                     
                     listaSlot.tamaño--;
 
-                    if(!listaSlot.estaVacia()) colisiones--;
+                    if(listaSlot.tamaño == 1) colisiones -= 2;
+                    else if(listaSlot.tamaño > 1) colisiones--;
                     
                     return true;
                 }
@@ -113,7 +123,8 @@ public class TablaHash{
                 
                 arbolSlot.nodos--;
                 
-                if(arbolSlot.getRaiz() != null) colisiones--;
+                if(arbolSlot.nodos == 1) colisiones -= 2;
+                else if(arbolSlot.nodos > 1) colisiones--;
             }
             
             return nodoBorrado;
@@ -135,7 +146,7 @@ public class TablaHash{
                 
                 Registro reg = (Registro) actual.getDato();
                 
-                if(getK(reg.getPlate()) == k && reg.getPlate().equals(plate)) return reg;
+                if(reg.getPlate().equals(plate)) return reg;
             }
             
             return null;

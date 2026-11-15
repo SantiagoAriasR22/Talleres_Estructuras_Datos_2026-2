@@ -12,7 +12,7 @@ public class Estadisticas {
     private static final int ITERACIONES = 200;
     private static final int CALENTAMIENTO = 50;
     private static final int MEDICIONES = ITERACIONES - CALENTAMIENTO;
-    private static final Locale ES = Locale.forLanguageTag("es-CO");
+    private static final Locale EN = Locale.US;
 
     private Estadisticas() {
     }
@@ -20,8 +20,8 @@ public class Estadisticas {
     public static String generarReporte(ArrayList<Registro> registros) {
 
         if (registros == null || registros.isEmpty()) {
-            return "No hay registros para medir.\n"
-                 + "Cargue un archivo CSV con datos antes de ejecutar la prueba.";
+            return "No records to measure.\n"
+                 + "Load a CSV file with data before running the test.";
         }
 
         Resultado division = medir(registros, true);
@@ -50,8 +50,7 @@ public class Estadisticas {
             long insLista;
             long insArbol;
 
-            // En las vueltas pares se mide primero la lista; en las impares,
-            // primero el arbol. Asi ninguna queda siempre despues de la otra.
+            //en las vueltas pares se mide primero la lista, en las impares primero el arbol
             if (iteracion % 2 == 0) {
                 long t0 = System.nanoTime();
                 for (Registro r : registros) {
@@ -143,7 +142,7 @@ public class Estadisticas {
         return new Resultado(insLista, insArbol, delLista, delArbol);
     }
 
-    /** Porcentaje de mejora del arbol frente a la lista. */
+    //porcentaje de mejora del arbol frente a la lista
     private static double mejora(double lista, double arbol) {
         if (lista <= 0) return 0.0;
         return ((lista - arbol) / lista) * 100.0;
@@ -154,12 +153,12 @@ public class Estadisticas {
         StringBuilder sb = new StringBuilder();
 
         sb.append("<html><body><font face='Segoe UI' size='3'>");
-        sb.append("<b>Comparativa Tabla Hash: Lista Enlazada vs. Árbol Binario</b><br>");
+        sb.append("<b>Hash Table Comparison: Linked List vs. Binary Tree</b><br>");
         sb.append("--------------------------------------------------------<br><br>");
 
-        agregarBloque(sb, n, "División", division);
+        agregarBloque(sb, n, "Division", division);
         sb.append("<br>");
-        agregarBloque(sb, n, "Multiplicación", multiplicacion);
+        agregarBloque(sb, n, "Multiplication", multiplicacion);
 
         sb.append("</font></body></html>");
 
@@ -168,33 +167,33 @@ public class Estadisticas {
 
     private static void agregarBloque(StringBuilder sb, int n, String metodo, Resultado r) {
 
-        sb.append(String.format(ES,
-                "Registros evaluados: %d | Función Hash: %s<br><br>", n, metodo));
+        sb.append(String.format(EN,
+                "Evaluated records: %d | Hash Function: %s<br><br>", n, metodo));
 
-        sb.append("<b>1. Acción INSERTAR:</b><br>");
-        sb.append(String.format(ES,
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Tiempo Lista Enlazada: %.3f ms<br>", r.insLista / 1000.0));
-        sb.append(String.format(ES,
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Tiempo Árbol Binario: %.3f ms<br>", r.insArbol / 1000.0));
-        sb.append(String.format(ES,
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Mejora porcentual:&nbsp;&nbsp;%.2f %%<br><br>",
+        sb.append("<b>1. INSERT Action:</b><br>");
+        sb.append(String.format(EN,
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Linked List Time: %.3f ms<br>", r.insLista / 1000.0));
+        sb.append(String.format(EN,
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Binary Tree Time: %.3f ms<br>", r.insArbol / 1000.0));
+        sb.append(String.format(EN,
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Percentage improvement:&nbsp;&nbsp;%.2f %%<br><br>",
                 mejora(r.insLista, r.insArbol)));
 
-        sb.append("<b>2. Acción BORRAR:</b><br>");
-        sb.append(String.format(ES,
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Tiempo Lista Enlazada: %.3f ms<br>", r.delLista / 1000.0));
-        sb.append(String.format(ES,
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Tiempo Árbol Binario: %.3f ms<br>", r.delArbol / 1000.0));
-        sb.append(String.format(ES,
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Mejora porcentual:&nbsp;&nbsp;%.2f %%<br><br>",
+        sb.append("<b>2. DELETE Action:</b><br>");
+        sb.append(String.format(EN,
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Linked List Time: %.3f ms<br>", r.delLista / 1000.0));
+        sb.append(String.format(EN,
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Binary Tree Time: %.3f ms<br>", r.delArbol / 1000.0));
+        sb.append(String.format(EN,
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Percentage improvement:&nbsp;&nbsp;%.2f %%<br><br>",
                 mejora(r.delLista, r.delArbol)));
 
         double promedio = (mejora(r.insLista, r.insArbol) + mejora(r.delLista, r.delArbol)) / 2.0;
-        sb.append(String.format(ES,
-                "<b>Mejora promedio global (Insertar y Borrar): %.2f %%</b><br>", promedio));
+        sb.append(String.format(EN,
+                "<b>Overall average improvement (Insert & Delete): %.2f %%</b><br>", promedio));
     }
 
-    /** Resultado de un metodo hash: promedios en microsegundos. */
+    //resultado de un metodo hash: promedios en microsegundos
     private static class Resultado {
 
         final double insLista;

@@ -481,7 +481,7 @@ public class GUI extends javax.swing.JFrame {
         scroll.getViewport().setBackground(java.awt.Color.WHITE);
 
         javax.swing.JOptionPane.showMessageDialog(this, scroll,
-                "Parte 2: Lista vs. Árbol Binario", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                "Part 2: Linked List vs. Binary Tree", javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_jButton2ActionPerformed
     
     private void insertar(){
