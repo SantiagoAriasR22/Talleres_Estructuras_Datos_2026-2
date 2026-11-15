@@ -9,6 +9,7 @@ public class TablaHash{
     private final boolean esLista;
     private final boolean esDivision;
     private final double A = (Math.sqrt(5)-1)/2;
+    private boolean nodoBorrado;
     
     public TablaHash(boolean esLista, boolean esDivision){
         
@@ -98,18 +99,18 @@ public class TablaHash{
             
             Arbol<Registro> arbolSlot = (Arbol<Registro>) this.tablaHash.get(indice);
             
-            boolean[] borrado = new boolean[1];
+            nodoBorrado = false;
             
-            arbolSlot.raiz = eliminarEnArbol(arbolSlot.getRaiz(), k, plate, borrado);
+            arbolSlot.raiz = eliminarEnArbol(arbolSlot.getRaiz(), k, plate);
             
-            if(borrado[0]){
+            if(nodoBorrado){
                 
                 arbolSlot.nodos--;
                 
                 if(arbolSlot.getRaiz() != null) colisiones--;
             }
             
-            return borrado[0];
+            return nodoBorrado;
         }
         
     }
@@ -161,28 +162,28 @@ public class TablaHash{
         return buscarEnArbol(nodo.derecho, k, plate);
     }
     
-    private NodoArbol<Registro> eliminarEnArbol(NodoArbol<Registro> nodo, int k, String plate, boolean[] borrado){
+    private NodoArbol<Registro> eliminarEnArbol(NodoArbol<Registro> nodo, int k, String plate){
         
         if(nodo == null) return null;
         
         long llave = nodo.getDato();
         
         if(k < llave){
-            nodo.izquierdo = eliminarEnArbol(nodo.izquierdo, k, plate, borrado);
+            nodo.izquierdo = eliminarEnArbol(nodo.izquierdo, k, plate);
         }
         else if(k > llave){
-            nodo.derecho = eliminarEnArbol(nodo.derecho, k, plate, borrado);
+            nodo.derecho = eliminarEnArbol(nodo.derecho, k, plate);
         }
         else{
             
             Registro reg = (Registro) nodo.getInformacion();
             
-            if(!borrado[0] && reg.getPlate().equals(plate)){
-                borrado[0] = true;
+            if(!nodoBorrado && reg.getPlate().equals(plate)){
+                nodoBorrado = true;
                 return desconectarNodo(nodo);
             }
             
-            nodo.derecho = eliminarEnArbol(nodo.derecho, k, plate, borrado);
+            nodo.derecho = eliminarEnArbol(nodo.derecho, k, plate);
         }
         
         return nodo;
@@ -229,7 +230,7 @@ public class TablaHash{
             char c = plate.charAt(j);
             int ascii = (int) c;
             
-            k+=(ascii*(Math.pow(2, i)));
+            k+=(ascii*(1 << i));
                  
         }
         

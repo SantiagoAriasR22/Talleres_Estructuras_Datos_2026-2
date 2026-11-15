@@ -1,6 +1,7 @@
 package vista;
 
 import controlador.Controlador;
+import estadisticas.Estadisticas;
 import java.io.File;
 import modelo.Registro;
 import modelo.SlotVista;
@@ -435,7 +436,52 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_jComboBoxOperationsActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        
+
+        // No se puede medir si no hay una tabla cargada.
+        if(!controlador.hayTabla()){
+            aviso("Load a CSV file first using File > Open.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        java.util.ArrayList<Registro> registros = controlador.getRegistros();
+
+        if(registros.isEmpty()){
+            aviso("The loaded file has no records to measure.",
+                  javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+
+        String reporte;
+
+        try {
+            reporte = Estadisticas.generarReporte(registros);
+        }
+        catch(RuntimeException ex){
+            setCursor(java.awt.Cursor.getDefaultCursor());
+            aviso("The test failed:\n" + ex.getMessage(),
+                  javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        finally {
+            setCursor(java.awt.Cursor.getDefaultCursor());
+        }
+
+        javax.swing.JEditorPane vista = new javax.swing.JEditorPane("text/html", reporte);
+        vista.setEditable(false);
+        vista.setCaretPosition(0);
+        vista.setBackground(java.awt.Color.WHITE);
+        vista.setBorder(null);
+
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(vista);
+        scroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        scroll.setPreferredSize(new java.awt.Dimension(480, 540));
+        scroll.getViewport().setBackground(java.awt.Color.WHITE);
+
+        javax.swing.JOptionPane.showMessageDialog(this, scroll,
+                "Parte 2: Lista vs. Árbol Binario", javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_jButton2ActionPerformed
     
     private void insertar(){

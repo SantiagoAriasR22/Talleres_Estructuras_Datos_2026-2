@@ -92,6 +92,12 @@ public class Controlador {
         return archivoActual;
     }
     
+    // Devuelve una copia de los registros cargados. La copia evita que quien
+    // la reciba pueda modificar la lista interna del controlador.
+    public ArrayList<Registro> getRegistros(){
+        return new ArrayList<>(registros);
+    }
+    
     public int cargarColisiones(){
         return (tablaHash==null) ? 0 : tablaHash.getColisiones();
     }

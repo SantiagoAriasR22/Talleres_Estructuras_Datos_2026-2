@@ -48,7 +48,7 @@ public class Arbol<T>{
                 
             }
             
-            if(valor>=raiz.getDato()) {
+            else {
                 
 		if(raiz.derecho==null){
                     
